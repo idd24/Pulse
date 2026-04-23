@@ -1,14 +1,17 @@
 import uuid
-from datetime import datetime
+from datetime import date as date_t, datetime
 from typing import Optional
 
 from sqlalchemy import (
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
+    SmallInteger,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -37,6 +40,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     screen_time_logs: Mapped[list["ScreenTimeLog"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    daily_checkins: Mapped[list["DailyCheckin"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -85,3 +91,60 @@ class ScreenTimeLog(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="screen_time_logs")
+
+
+class DailyCheckin(Base):
+    __tablename__ = "daily_checkins"
+    __table_args__ = (
+        UniqueConstraint("user_id", "date", name="uq_daily_checkin_user_date"),
+        CheckConstraint("mood BETWEEN 0 AND 4", name="ck_daily_checkin_mood_v2"),
+        CheckConstraint("energy BETWEEN 0 AND 4", name="ck_daily_checkin_energy_v2"),
+        CheckConstraint(
+            "screen_time_minutes >= 0", name="ck_daily_checkin_screen_time"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    date: Mapped[date_t] = mapped_column(Date, nullable=False)
+    mood: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    energy: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    screen_time_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
+    top_category: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(back_populates="daily_checkins")
+    activities: Mapped[list["DailyCheckinActivity"]] = relationship(
+        back_populates="checkin",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+
+class DailyCheckinActivity(Base):
+    __tablename__ = "daily_checkin_activities"
+
+    checkin_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("daily_checkins.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    activity: Mapped[str] = mapped_column(String(64), primary_key=True)
+
+    checkin: Mapped["DailyCheckin"] = relationship(back_populates="activities")
