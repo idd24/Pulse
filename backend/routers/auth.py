@@ -1,0 +1,34 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from database import get_db
+from models import User
+from schemas import RegisterRequest, TokenResponse, UserResponse
+from security import create_access_token, hash_password
+
+router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+
+@router.post(
+    "/register",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> TokenResponse:
+    email = payload.email.lower()
+
+    if db.query(User).filter(User.email == email).first() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
+
+    user = User(email=email, password_hash=hash_password(payload.password))
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return TokenResponse(
+        access_token=create_access_token(str(user.id)),
+        user=UserResponse.model_validate(user),
+    )
