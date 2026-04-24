@@ -5,6 +5,9 @@ venv/
 CLAUDE.md
 .env
 
+# backend db scripts
+/backend/scripts/
+
 # dependencies
 node_modules/
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import auth, checkins, screentime
+from routers import auth, checkins, dashboard, screentime
 
 app = FastAPI()
 
@@ -18,6 +18,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(checkins.router)
 app.include_router(screentime.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/")

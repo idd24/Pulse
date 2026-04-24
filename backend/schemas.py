@@ -1,5 +1,5 @@
 from datetime import date as date_t, datetime
-from typing import Literal
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -77,3 +77,21 @@ class ScreentimeResponse(BaseModel):
     entertainment: int
     productivity: int
     updated_at: datetime
+
+
+# --- Dashboard summary -----------------------------------------------------
+
+
+class DashboardWeekMetrics(BaseModel):
+    start_date: date_t
+    end_date: date_t
+    # Null when the week had zero check-ins — distinguishes "no data" from 0.
+    avg_mood: Optional[float]
+    avg_energy: Optional[float]
+    checkin_count: int
+    total_screen_time_minutes: int
+
+
+class DashboardSummaryResponse(BaseModel):
+    current: DashboardWeekMetrics
+    previous: DashboardWeekMetrics
