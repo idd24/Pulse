@@ -33,12 +33,12 @@ export type ScreentimeResponse = {
 
 // Use the device's local calendar day so an entry made at 11pm
 // doesn't roll onto the next UTC day in Postgres.
-function localDateIso() {
+export function localDateIso() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function todayHeader() {
+export function todayHeader() {
   return { 'X-Client-Date': localDateIso() };
 }
 
