@@ -71,3 +71,27 @@ class DailyCheckinResponse(BaseModel):
     top_category: Optional[str]
     activities: list[str]
     updated_at: datetime
+
+
+# --- Screen-time breakdown -------------------------------------------------
+
+# Field names match the Category literal above; values are minutes per day.
+class ScreentimeUpsert(BaseModel):
+    social: int = Field(default=0, ge=0, le=24 * 60)
+    entertainment: int = Field(default=0, ge=0, le=24 * 60)
+    productivity: int = Field(default=0, ge=0, le=24 * 60)
+    games: int = Field(default=0, ge=0, le=24 * 60)
+    communication: int = Field(default=0, ge=0, le=24 * 60)
+    other: int = Field(default=0, ge=0, le=24 * 60)
+
+
+class ScreentimeResponse(BaseModel):
+    id: UUID
+    date: date_t
+    social: int
+    entertainment: int
+    productivity: int
+    games: int
+    communication: int
+    other: int
+    updated_at: datetime
