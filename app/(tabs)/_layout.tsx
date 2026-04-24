@@ -1,5 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { StyleSheet } from 'react-native';
 
 import { getToken } from '@/lib/api';
 import { getMe } from '@/lib/auth';
@@ -26,11 +28,74 @@ export default function TabLayout() {
   if (status === 'anon') return <Redirect href="/login" />;
 
   return (
-    <Tabs>
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="checkin" options={{ title: 'Check-in' }} />
-      <Tabs.Screen name="insights" options={{ title: 'Insights' }} />
-      <Tabs.Screen name="setting" options={{ title: 'Setting' }} />
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: '#1f2328',
+          borderTopColor: '#2d333b',
+          borderTopWidth: StyleSheet.hairlineWidth,
+        },
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: '#9ca3af',
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons
+              name={focused ? 'home' : 'home-outline'}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="checkin"
+        options={{
+          title: 'Check-in',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons
+              name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="insights"
+        options={{
+          title: 'Insights',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons
+              name={focused ? 'stats-chart' : 'stats-chart-outline'}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="setting"
+        options={{
+          title: 'Setting',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons
+              name={focused ? 'settings' : 'settings-outline'}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/lib/api';
 import { getMe, logout, type AuthUser } from '@/lib/auth';
@@ -28,14 +29,16 @@ export default function SettingScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView edges={['top']} style={styles.loading}>
         <ActivityIndicator color="#fff" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.container}>
+      <Text style={styles.title}>Setting</Text>
+
       <View style={styles.card}>
         <Text style={styles.label}>Signed in as</Text>
         <Text style={styles.email}>{user?.email ?? '—'}</Text>
@@ -46,7 +49,7 @@ export default function SettingScreen() {
       <Pressable style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutText}>Log out</Text>
       </Pressable>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -56,6 +59,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#25292e',
     padding: 20,
     gap: 20,
+  },
+  loading: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '600',
   },
   card: {
     backgroundColor: '#1f2328',

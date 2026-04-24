@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   ACTIVITIES,
@@ -99,20 +100,20 @@ export default function CheckinScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loading}>
+      <SafeAreaView edges={['top']} style={styles.loading}>
         <ActivityIndicator color="#fff" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   const disabled = saving || mood === null || energy === null;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-    >
+    <SafeAreaView edges={['top']} style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
       <Text style={styles.title}>
         {existing ? "Today's check-in" : 'Daily check-in'}
       </Text>
@@ -209,8 +210,9 @@ export default function CheckinScreen() {
         )}
       </Pressable>
 
-      {justSaved ? <Text style={styles.saved}>✓ Saved</Text> : null}
-    </ScrollView>
+        {justSaved ? <Text style={styles.saved}>✓ Saved</Text> : null}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

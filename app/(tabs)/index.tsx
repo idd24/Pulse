@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getMe, type AuthUser } from '@/lib/auth';
 import { getTodayCheckin, type CheckinResponse } from '@/lib/checkins';
@@ -92,15 +93,15 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loading}>
+      <SafeAreaView edges={['top']} style={styles.loading}>
         <ActivityIndicator color="#fff" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error || !data) {
     return (
-      <View style={styles.loading}>
+      <SafeAreaView edges={['top']} style={styles.loading}>
         <Text style={styles.error}>{error ?? 'Failed to load'}</Text>
         <Pressable
           onPress={() => {
@@ -111,7 +112,7 @@ export default function HomeScreen() {
         >
           <Text style={styles.retryText}>Tap to retry</Text>
         </Pressable>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -121,32 +122,29 @@ export default function HomeScreen() {
     summary.current.total_screen_time_minutes === 0;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true);
-            load();
-          }}
-          tintColor="#fff"
-        />
-      }
-    >
-      <GreetingBlock name={nameFromEmail(me.email)} />
-      <CheckinStatusPill checkedIn={today !== null} />
+    <SafeAreaView edges={['top']} style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              load();
+            }}
+            tintColor="#fff"
+          />
+        }
+      >
+        <GreetingBlock name={nameFromEmail(me.email)} />
+        <CheckinStatusPill checkedIn={today !== null} />
 
-      <Text style={styles.sectionLabel}>This week</Text>
-      {isEmpty ? (
-        <EmptyCard />
-      ) : (
-        <MetricsRow summary={summary} />
-      )}
+        <Text style={styles.sectionLabel}>This week</Text>
+        {isEmpty ? <EmptyCard /> : <MetricsRow summary={summary} />}
 
-      <InsightCard />
-    </ScrollView>
+        <InsightCard />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
