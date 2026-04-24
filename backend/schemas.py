@@ -1,5 +1,5 @@
 from datetime import date as date_t, datetime
-from typing import Literal, Optional
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -42,21 +42,11 @@ Activity = Literal[
     "meditation",
     "chores",
 ]
-Category = Literal[
-    "social",
-    "entertainment",
-    "productivity",
-    "games",
-    "communication",
-    "other",
-]
 
 
 class DailyCheckinUpsert(BaseModel):
     mood: int = Field(ge=0, le=4)
     energy: int = Field(ge=0, le=4)
-    screen_time_minutes: int = Field(ge=0, le=24 * 60)
-    top_category: Optional[Category] = None
     activities: list[Activity] = Field(default_factory=list, max_length=8)
 
 
@@ -67,22 +57,17 @@ class DailyCheckinResponse(BaseModel):
     date: date_t
     mood: int
     energy: int
-    screen_time_minutes: int
-    top_category: Optional[str]
     activities: list[str]
     updated_at: datetime
 
 
 # --- Screen-time breakdown -------------------------------------------------
 
-# Field names match the Category literal above; values are minutes per day.
+
 class ScreentimeUpsert(BaseModel):
     social: int = Field(default=0, ge=0, le=24 * 60)
     entertainment: int = Field(default=0, ge=0, le=24 * 60)
     productivity: int = Field(default=0, ge=0, le=24 * 60)
-    games: int = Field(default=0, ge=0, le=24 * 60)
-    communication: int = Field(default=0, ge=0, le=24 * 60)
-    other: int = Field(default=0, ge=0, le=24 * 60)
 
 
 class ScreentimeResponse(BaseModel):
@@ -91,7 +76,4 @@ class ScreentimeResponse(BaseModel):
     social: int
     entertainment: int
     productivity: int
-    games: int
-    communication: int
-    other: int
     updated_at: datetime

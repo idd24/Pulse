@@ -36,9 +36,6 @@ def _to_response(row: ScreentimeBreakdown) -> ScreentimeResponse:
         social=row.social_minutes,
         entertainment=row.entertainment_minutes,
         productivity=row.productivity_minutes,
-        games=row.games_minutes,
-        communication=row.communication_minutes,
-        other=row.other_minutes,
         updated_at=row.updated_at,
     )
 
@@ -72,9 +69,6 @@ def upsert_today(
     row.social_minutes = payload.social
     row.entertainment_minutes = payload.entertainment
     row.productivity_minutes = payload.productivity
-    row.games_minutes = payload.games
-    row.communication_minutes = payload.communication
-    row.other_minutes = payload.other
 
     db.commit()
     db.refresh(row)

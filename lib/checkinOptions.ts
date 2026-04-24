@@ -13,17 +13,6 @@ export const ACTIVITIES = [
 
 export type ActivityId = (typeof ACTIVITIES)[number]['id'];
 
-export const CATEGORIES = [
-  { id: 'social', label: 'Social' },
-  { id: 'entertainment', label: 'Entertainment' },
-  { id: 'productivity', label: 'Productivity' },
-  { id: 'games', label: 'Games' },
-  { id: 'communication', label: 'Communication' },
-  { id: 'other', label: 'Other' },
-] as const;
-
-export type CategoryId = (typeof CATEGORIES)[number]['id'];
-
 export const MOOD_EMOJI = ['😣', '😕', '😐', '🙂', '😄'] as const;
 
 // Red (0) → green (4). Indexed by score; UI renders i+1 as the label.
@@ -36,6 +25,3 @@ export const ENERGY_COLORS = [
 ] as const;
 
 export const ENERGY_LABELS = ['Drained', 'Energized'] as const;
-
-export const SCREEN_TIME_HOURS = Array.from({ length: 17 }, (_, i) => i);
-export const SCREEN_TIME_MINUTES = [0, 15, 30, 45] as const;

@@ -99,9 +99,6 @@ class DailyCheckin(Base):
         UniqueConstraint("user_id", "date", name="uq_daily_checkin_user_date"),
         CheckConstraint("mood BETWEEN 0 AND 4", name="ck_daily_checkin_mood_v2"),
         CheckConstraint("energy BETWEEN 0 AND 4", name="ck_daily_checkin_energy_v2"),
-        CheckConstraint(
-            "screen_time_minutes >= 0", name="ck_daily_checkin_screen_time"
-        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -116,8 +113,6 @@ class DailyCheckin(Base):
     date: Mapped[date_t] = mapped_column(Date, nullable=False)
     mood: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     energy: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    screen_time_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
-    top_category: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -166,18 +161,6 @@ class ScreentimeBreakdown(Base):
             "productivity_minutes BETWEEN 0 AND 1440",
             name="ck_screentime_productivity_range",
         ),
-        CheckConstraint(
-            "games_minutes BETWEEN 0 AND 1440",
-            name="ck_screentime_games_range",
-        ),
-        CheckConstraint(
-            "communication_minutes BETWEEN 0 AND 1440",
-            name="ck_screentime_communication_range",
-        ),
-        CheckConstraint(
-            "other_minutes BETWEEN 0 AND 1440",
-            name="ck_screentime_other_range",
-        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -197,15 +180,6 @@ class ScreentimeBreakdown(Base):
         Integer, nullable=False, default=0, server_default="0"
     )
     productivity_minutes: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
-    games_minutes: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
-    communication_minutes: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
-    other_minutes: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
     created_at: Mapped[datetime] = mapped_column(

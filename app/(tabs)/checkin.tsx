@@ -1,3 +1,4 @@
+import Slider from '@react-native-community/slider';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,19 +11,29 @@ import {
 
 import {
   ACTIVITIES,
-  CATEGORIES,
   ENERGY_COLORS,
   ENERGY_LABELS,
   MOOD_EMOJI,
   type ActivityId,
-  type CategoryId,
 } from '@/lib/checkinOptions';
 import {
   getTodayCheckin,
+  getTodayScreentime,
   saveCheckin,
+  saveScreentime,
   type CheckinResponse,
 } from '@/lib/checkins';
-import { ScreenTimePicker } from '@/components/ScreenTimePicker';
+
+const SLIDER_MAX_MINUTES = 480; // 8h per-category cap
+const SLIDER_STEP = 15;
+
+function formatMinutes(m: number) {
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  if (h === 0) return `${min}m`;
+  if (min === 0) return `${h}h`;
+  return `${h}h ${min}m`;
+}
 
 export default function CheckinScreen() {
   const [loading, setLoading] = useState(true);
@@ -34,21 +45,24 @@ export default function CheckinScreen() {
   const [mood, setMood] = useState<number | null>(null);
   const [energy, setEnergy] = useState<number | null>(null);
   const [activities, setActivities] = useState<Set<ActivityId>>(new Set());
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
-  const [category, setCategory] = useState<CategoryId | null>(null);
+  const [social, setSocial] = useState(0);
+  const [entertainment, setEntertainment] = useState(0);
+  const [productivity, setProductivity] = useState(0);
 
   useEffect(() => {
-    getTodayCheckin()
-      .then((res) => {
-        if (!res) return;
-        setExisting(res);
-        setMood(res.mood);
-        setEnergy(res.energy);
-        setActivities(new Set(res.activities));
-        setHours(Math.min(16, Math.floor(res.screen_time_minutes / 60)));
-        setMinutes(res.screen_time_minutes % 60);
-        setCategory(res.top_category);
+    Promise.all([getTodayCheckin(), getTodayScreentime()])
+      .then(([checkin, screentime]) => {
+        if (checkin) {
+          setExisting(checkin);
+          setMood(checkin.mood);
+          setEnergy(checkin.energy);
+          setActivities(new Set(checkin.activities));
+        }
+        if (screentime) {
+          setSocial(screentime.social);
+          setEntertainment(screentime.entertainment);
+          setProductivity(screentime.productivity);
+        }
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'))
       .finally(() => setLoading(false));
@@ -69,14 +83,11 @@ export default function CheckinScreen() {
     setSaving(true);
     setJustSaved(false);
     try {
-      const res = await saveCheckin({
-        mood,
-        energy,
-        screen_time_minutes: hours * 60 + minutes,
-        top_category: category,
-        activities: Array.from(activities),
-      });
-      setExisting(res);
+      const [checkin] = await Promise.all([
+        saveCheckin({ mood, energy, activities: Array.from(activities) }),
+        saveScreentime({ social, entertainment, productivity }),
+      ]);
+      setExisting(checkin);
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 2000);
     } catch (e) {
@@ -168,34 +179,18 @@ export default function CheckinScreen() {
         </View>
       </Section>
 
-      <Section label="Screen time today">
-        <ScreenTimePicker
-          hours={hours}
-          minutes={minutes}
-          onChange={(h, m) => {
-            setHours(h);
-            setMinutes(m);
-          }}
+      <Section label="Screen time by category" sublabel="Estimate minutes spent today">
+        <SliderRow label="Social" value={social} onChange={setSocial} />
+        <SliderRow
+          label="Entertainment"
+          value={entertainment}
+          onChange={setEntertainment}
         />
-      </Section>
-
-      <Section label="Most-used category" sublabel="Optional — helps weight your screen time">
-        <View style={styles.chipGrid}>
-          {CATEGORIES.map((c) => {
-            const selected = category === c.id;
-            return (
-              <Pressable
-                key={c.id}
-                onPress={() => setCategory(selected ? null : c.id)}
-                style={[styles.chip, selected && styles.chipSelected]}
-              >
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                  {c.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <SliderRow
+          label="Productivity"
+          value={productivity}
+          onChange={setProductivity}
+        />
       </Section>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -233,6 +228,35 @@ function Section({
       <Text style={styles.sectionLabel}>{label}</Text>
       {sublabel ? <Text style={styles.hint}>{sublabel}</Text> : null}
       {children}
+    </View>
+  );
+}
+
+function SliderRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <View style={styles.sliderRow}>
+      <View style={styles.sliderHeader}>
+        <Text style={styles.sliderLabel}>{label}</Text>
+        <Text style={styles.sliderValue}>{formatMinutes(value)}</Text>
+      </View>
+      <Slider
+        minimumValue={0}
+        maximumValue={SLIDER_MAX_MINUTES}
+        step={SLIDER_STEP}
+        value={value}
+        onValueChange={(v) => onChange(Math.round(v))}
+        minimumTrackTintColor="#fff"
+        maximumTrackTintColor="#333942"
+        thumbTintColor="#fff"
+      />
     </View>
   );
 }
@@ -349,6 +373,27 @@ const styles = StyleSheet.create({
   chipTextSelected: {
     color: '#25292e',
     fontWeight: '600',
+  },
+  sliderRow: {
+    backgroundColor: '#1f2328',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 4,
+  },
+  sliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sliderLabel: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  sliderValue: {
+    color: '#9ca3af',
+    fontSize: 13,
   },
   button: {
     backgroundColor: '#fff',

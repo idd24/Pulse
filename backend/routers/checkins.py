@@ -32,8 +32,6 @@ def _to_response(checkin: DailyCheckin) -> DailyCheckinResponse:
         date=checkin.date,
         mood=checkin.mood,
         energy=checkin.energy,
-        screen_time_minutes=checkin.screen_time_minutes,
-        top_category=checkin.top_category,
         activities=sorted(a.activity for a in checkin.activities),
         updated_at=checkin.updated_at,
     )
@@ -79,8 +77,6 @@ def upsert_today(
 
     checkin.mood = payload.mood
     checkin.energy = payload.energy
-    checkin.screen_time_minutes = payload.screen_time_minutes
-    checkin.top_category = payload.top_category
 
     # Replace the activity set. dedupe in case client sends duplicates.
     checkin.activities = [
