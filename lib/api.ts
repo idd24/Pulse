@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 
 const BACKEND_PORT = 8000;
@@ -73,6 +74,17 @@ export async function apiFetch<T = unknown>(
     let message = 'Something went wrong';
     if (typeof body?.detail === 'string') message = body.detail;
     else if (Array.isArray(body?.detail)) message = body.detail[0]?.msg ?? 'Invalid input';
+
+    // A 401 on a request we *authed* means the stored token is no longer
+    // usable (expired, user deleted, DB wiped) — drop it and bounce to
+    // login. Unauthed 401s (login with wrong password) are credential
+    // failures; let the caller surface the error instead of remounting
+    // the login screen.
+    if (res.status === 401 && token) {
+      await deleteToken();
+      router.replace('/login');
+    }
+
     throw new ApiError(res.status, message);
   }
 

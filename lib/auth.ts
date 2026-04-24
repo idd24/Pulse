@@ -1,4 +1,6 @@
-import { apiFetch } from '@/lib/api';
+import { router } from 'expo-router';
+
+import { apiFetch, deleteToken } from '@/lib/api';
 
 export type AuthUser = {
   id: string;
@@ -24,4 +26,13 @@ export function loginUser(email: string, password: string) {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
+}
+
+export function getMe() {
+  return apiFetch<AuthUser>('/api/auth/me');
+}
+
+export async function logout() {
+  await deleteToken();
+  router.replace('/login');
 }

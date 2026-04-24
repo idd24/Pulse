@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import User
 from schemas import LoginRequest, RegisterRequest, TokenResponse, UserResponse
-from security import create_access_token, hash_password, verify_password
+from security import create_access_token, get_current_user, hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -32,6 +32,11 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> TokenRe
         access_token=create_access_token(str(user.id)),
         user=UserResponse.model_validate(user),
     )
+
+
+@router.get("/me", response_model=UserResponse)
+def me(user: User = Depends(get_current_user)) -> UserResponse:
+    return UserResponse.model_validate(user)
 
 
 @router.post(
