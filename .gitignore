@@ -4,6 +4,9 @@
 venv/
 CLAUDE.md
 .env
+/backend/sample_data/
+/backend/correlation_test.py
+
 
 # backend db scripts
 /backend/scripts/
