@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TrendsCard } from '@/components/TrendsCard';
 import { getMe, type AuthUser } from '@/lib/auth';
 import { getTodayCheckin, type CheckinResponse } from '@/lib/checkins';
 import {
@@ -75,6 +76,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<LoadedData | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   function load() {
     setError(null);
@@ -130,6 +132,7 @@ export default function HomeScreen() {
             refreshing={refreshing}
             onRefresh={() => {
               setRefreshing(true);
+              setRefreshKey((k) => k + 1);
               load();
             }}
             tintColor="#fff"
@@ -138,6 +141,8 @@ export default function HomeScreen() {
       >
         <GreetingBlock name={nameFromEmail(me.email)} />
         <CheckinStatusPill checkedIn={today !== null} />
+
+        <TrendsCard refreshKey={refreshKey} />
 
         <Text style={styles.sectionLabel}>This week</Text>
         {isEmpty ? <EmptyCard /> : <MetricsRow summary={summary} />}

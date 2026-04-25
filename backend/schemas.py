@@ -95,3 +95,20 @@ class DashboardWeekMetrics(BaseModel):
 class DashboardSummaryResponse(BaseModel):
     current: DashboardWeekMetrics
     previous: DashboardWeekMetrics
+
+
+# --- Dashboard trends ------------------------------------------------------
+
+
+TrendsRange = Literal["7d", "30d", "90d"]
+
+
+class TrendsResponse(BaseModel):
+    range: TrendsRange
+    start_date: date_t
+    end_date: date_t
+    dates: list[date_t]
+    # null marks days without a check-in / breakdown — distinguishes "no data" from 0.
+    mood: list[Optional[int]]
+    energy: list[Optional[int]]
+    screen_time_minutes: list[Optional[int]]

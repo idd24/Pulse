@@ -1,16 +1,23 @@
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import DailyCheckin, ScreentimeBreakdown, User
-from schemas import DashboardSummaryResponse, DashboardWeekMetrics
+from schemas import (
+    DashboardSummaryResponse,
+    DashboardWeekMetrics,
+    TrendsRange,
+    TrendsResponse,
+)
 from security import get_current_user
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+
+_RANGE_DAYS: dict[str, int] = {"7d": 7, "30d": 30, "90d": 90}
 
 
 def _resolve_today(x_client_date: Optional[str]) -> date:
@@ -102,4 +109,72 @@ def get_summary(
             checkin_count=int(checkin_agg.p_count or 0),
             total_screen_time_minutes=int(screen_agg.p_total or 0),
         ),
+    )
+
+
+@router.get(
+    "/trends",
+    response_model=TrendsResponse,
+    summary="Daily mood / energy / screen-time time series for charts",
+)
+def get_trends(
+    period: TrendsRange = Query(
+        ..., alias="range", description="Time window: 7d, 30d, or 90d"
+    ),
+    x_client_date: Optional[str] = Header(default=None, alias="X-Client-Date"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TrendsResponse:
+    today = _resolve_today(x_client_date)
+    days = _RANGE_DAYS[period]
+    start = today - timedelta(days=days - 1)
+    end = today
+
+    checkin_rows = (
+        db.query(DailyCheckin.date, DailyCheckin.mood, DailyCheckin.energy)
+        .filter(
+            DailyCheckin.user_id == user.id,
+            DailyCheckin.date >= start,
+            DailyCheckin.date <= end,
+        )
+        .all()
+    )
+    checkin_by_date = {r.date: r for r in checkin_rows}
+
+    total_min = (
+        ScreentimeBreakdown.social_minutes
+        + ScreentimeBreakdown.entertainment_minutes
+        + ScreentimeBreakdown.productivity_minutes
+    )
+    screen_rows = (
+        db.query(ScreentimeBreakdown.date, total_min.label("total"))
+        .filter(
+            ScreentimeBreakdown.user_id == user.id,
+            ScreentimeBreakdown.date >= start,
+            ScreentimeBreakdown.date <= end,
+        )
+        .all()
+    )
+    screen_by_date = {r.date: int(r.total) for r in screen_rows}
+
+    # Build the complete ascending date series in Python so gaps surface as
+    # null without depending on Postgres-specific generate_series.
+    dates: list[date] = [start + timedelta(days=i) for i in range(days)]
+    mood: list[Optional[int]] = []
+    energy: list[Optional[int]] = []
+    screen: list[Optional[int]] = []
+    for d in dates:
+        c = checkin_by_date.get(d)
+        mood.append(int(c.mood) if c else None)
+        energy.append(int(c.energy) if c else None)
+        screen.append(screen_by_date.get(d))
+
+    return TrendsResponse(
+        range=period,
+        start_date=start,
+        end_date=end,
+        dates=dates,
+        mood=mood,
+        energy=energy,
+        screen_time_minutes=screen,
     )
