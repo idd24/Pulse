@@ -10,10 +10,12 @@ Insights whose underlying correlation no longer reaches significance are
 left in place — the row stops being refreshed but isn't deleted.
 """
 
+import math
 from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
 
+import pandas as pd
 from sqlalchemy.orm import Session
 
 from aggregation import build_daily_dataframe
@@ -24,7 +26,6 @@ from insight_templates import (
     OUTCOME_LABELS,
     SCREENTIME_LABELS,
     InsightTemplate,
-    confidence_from_p,
 )
 from models import DailyCheckin, Insight
 
@@ -70,6 +71,72 @@ def _pick_template_key(a: str, b: str) -> Optional[str]:
     return None
 
 
+# --- Per-template metric helpers ------------------------------------------
+# Compute the one number each template surfaces. All return nan on degenerate
+# input (empty group, missing variance) so the renderer can fall back to a
+# number-free body instead of printing "nan".
+
+def _binary_continuous_means(
+    df: pd.DataFrame, binary_var: str, continuous_var: str
+) -> tuple[float, float]:
+    """Mean of `continuous_var` when `binary_var` is True / False."""
+    sub = df[[binary_var, continuous_var]].dropna()
+    if sub.empty:
+        return float("nan"), float("nan")
+    flag = sub[binary_var].astype(bool)
+    yes = pd.to_numeric(sub.loc[flag, continuous_var], errors="coerce")
+    no = pd.to_numeric(sub.loc[~flag, continuous_var], errors="coerce")
+    m_yes = float(yes.mean()) if not yes.empty else float("nan")
+    m_no = float(no.mean()) if not no.empty else float("nan")
+    return m_yes, m_no
+
+
+def _continuous_continuous_split(
+    df: pd.DataFrame, split_var: str, value_var: str
+) -> tuple[float, float]:
+    """Median-split on `split_var` → (mean of value above median, mean below-or-equal)."""
+    sub = df[[split_var, value_var]].dropna()
+    if sub.empty:
+        return float("nan"), float("nan")
+    split = pd.to_numeric(sub[split_var], errors="coerce")
+    value = pd.to_numeric(sub[value_var], errors="coerce")
+    med = split.median()
+    high = value[split > med]
+    low = value[split <= med]
+    m_high = float(high.mean()) if not high.empty else float("nan")
+    m_low = float(low.mean()) if not low.empty else float("nan")
+    return m_high, m_low
+
+
+def _binary_binary_cooccurrence(
+    df: pd.DataFrame, var_a: str, var_b: str
+) -> float:
+    """P(b=True | a=True), as a 0–100 percentage."""
+    sub = df[[var_a, var_b]].dropna()
+    a_days = sub[sub[var_a].astype(bool)]
+    if a_days.empty:
+        return float("nan")
+    return float(a_days[var_b].astype(bool).mean()) * 100.0
+
+
+def _same_side_of_median_pct(
+    df: pd.DataFrame, var_a: str, var_b: str
+) -> float:
+    """% of rows where both vars sit on the same side of their respective medians."""
+    sub = df[[var_a, var_b]].dropna()
+    if sub.empty:
+        return float("nan")
+    a = pd.to_numeric(sub[var_a], errors="coerce")
+    b = pd.to_numeric(sub[var_b], errors="coerce")
+    med_a, med_b = a.median(), b.median()
+    same = (a > med_a) == (b > med_b)
+    return float(same.mean()) * 100.0
+
+
+def _finite(*vals: float) -> bool:
+    return all(isinstance(v, float) and math.isfinite(v) for v in vals)
+
+
 # --- Placeholder rendering -------------------------------------------------
 
 def _render(
@@ -77,80 +144,109 @@ def _render(
     variable_a: str,
     variable_b: str,
     direction: str,
-    n: int,
-    p_value: float,
+    df: pd.DataFrame,
 ) -> tuple[str, str]:
-    """Fill the template placeholders for this pair → (title, body)."""
-    conf = confidence_from_p(p_value)
-    base = {
-        "n": n,
-        "confidence_long": conf.long_label,
-        "confidence_stars": conf.stars,
-    }
+    """Fill the template placeholders for this pair → (title, body).
 
+    The metric (group means / co-occurrence rate / agreement %) is computed
+    from `df` here so the template never has to know about pandas. If the
+    metric is nan (degenerate input), falls back to a number-free body.
+    """
     key = template.key
+
     if key == "mood_energy_couple":
-        values = base
-    elif key == "activity_affects_outcome":
+        pct = _same_side_of_median_pct(df, "mood", "energy")
+        if not _finite(pct):
+            return _fallback_mood_energy(template, direction)
+        if direction == "negative":
+            pct = 100.0 - pct
+        return _format_pair(template, direction, {"pct": pct})
+
+    if key == "activity_affects_outcome":
         act = variable_a if variable_a in ACTIVITY_LABELS else variable_b
         out = variable_b if act == variable_a else variable_a
-        al = ACTIVITY_LABELS[act]
-        values = {
-            **base,
+        al, ol = ACTIVITY_LABELS[act], OUTCOME_LABELS[out]
+        m_yes, m_no = _binary_continuous_means(df, act, out)
+        if not _finite(m_yes, m_no):
+            return _fallback_activity_outcome(template, direction, al, ol)
+        return _format_pair(template, direction, {
             "activity_title": al["title"],
             "activity_verb_past": al["verb_past"],
-            "outcome": OUTCOME_LABELS[out],
-        }
-    elif key == "screentime_affects_outcome":
+            "outcome_title": ol["title"],
+            "outcome_lower": ol["noun"],
+            "m_yes": m_yes,
+            "m_no": m_no,
+        })
+
+    if key == "screentime_affects_outcome":
         scr = variable_a if variable_a in SCREENTIME_LABELS else variable_b
         out = variable_b if scr == variable_a else variable_a
-        sl = SCREENTIME_LABELS[scr]
-        values = {
-            **base,
+        sl, ol = SCREENTIME_LABELS[scr], OUTCOME_LABELS[out]
+        m_high, m_low = _continuous_continuous_split(df, scr, out)
+        if not _finite(m_high, m_low):
+            return _fallback_screentime_outcome(template, direction, sl, ol)
+        return _format_pair(template, direction, {
             "screen_title": sl["title"],
             "screen_noun": sl["noun"],
-            "outcome": OUTCOME_LABELS[out],
-        }
-    elif key == "habits_pair":
+            "outcome_title": ol["title"],
+            "outcome_lower": ol["noun"],
+            "m_high": m_high,
+            "m_low": m_low,
+        })
+
+    if key == "habits_pair":
         al = ACTIVITY_LABELS[variable_a]
         bl = ACTIVITY_LABELS[variable_b]
-        values = {
-            **base,
+        pct = _binary_binary_cooccurrence(df, variable_a, variable_b)
+        if not _finite(pct):
+            return _fallback_habits_pair(template, direction, al, bl)
+        return _format_pair(template, direction, {
             "activity_a_title": al["title"],
             "activity_a_verb_past": al["verb_past"],
             "activity_b_noun": bl["noun"],
             "activity_b_verb_past": bl["verb_past"],
-        }
-    elif key == "weekend_shift":
-        other = variable_a if variable_a != "is_weekend" else variable_b
-        if other in OUTCOME_LABELS:
-            other_noun = OUTCOME_LABELS[other]
-        else:
-            other_noun = SCREENTIME_LABELS[other]["noun"]
-        values = {**base, "other_noun": other_noun, "other_lower": other_noun}
-    elif key == "screentime_categories_link":
+            "pct": pct,
+        })
+
+    if key == "weekend_shift":
+        return _render_weekend_shift(template, variable_a, variable_b, direction, df)
+
+    if key == "screentime_categories_link":
         al = SCREENTIME_LABELS[variable_a]
         bl = SCREENTIME_LABELS[variable_b]
-        values = {
-            **base,
+        pct = _same_side_of_median_pct(df, variable_a, variable_b)
+        if not _finite(pct):
+            return _fallback_screentime_link(template, direction, al, bl)
+        if direction == "negative":
+            pct = 100.0 - pct
+        return _format_pair(template, direction, {
             "screen_a_title": al["title"],
-            "screen_a_noun": al["noun"],
             "screen_b_noun": bl["noun"],
-        }
-    elif key == "activity_shifts_screentime":
+            "pct": pct,
+        })
+
+    if key == "activity_shifts_screentime":
         act = variable_a if variable_a in ACTIVITY_LABELS else variable_b
         scr = variable_b if act == variable_a else variable_a
-        al = ACTIVITY_LABELS[act]
-        sl = SCREENTIME_LABELS[scr]
-        values = {
-            **base,
+        al, sl = ACTIVITY_LABELS[act], SCREENTIME_LABELS[scr]
+        m_yes, m_no = _binary_continuous_means(df, act, scr)
+        if not _finite(m_yes, m_no):
+            return _fallback_activity_screentime(template, direction, al, sl)
+        return _format_pair(template, direction, {
             "activity_title": al["title"],
             "activity_verb_past": al["verb_past"],
+            "screen_title": sl["title"],
             "screen_noun": sl["noun"],
-        }
-    else:
-        raise ValueError(f"Unknown template key: {key}")
+            "m_yes": m_yes,
+            "m_no": m_no,
+        })
 
+    raise ValueError(f"Unknown template key: {key}")
+
+
+def _format_pair(
+    template: InsightTemplate, direction: str, values: dict
+) -> tuple[str, str]:
     if direction == "positive":
         return (
             template.title_positive.format(**values),
@@ -160,6 +256,123 @@ def _render(
         template.title_negative.format(**values),
         template.body_negative.format(**values),
     )
+
+
+def _render_weekend_shift(
+    template: InsightTemplate,
+    variable_a: str,
+    variable_b: str,
+    direction: str,
+    df: pd.DataFrame,
+) -> tuple[str, str]:
+    """Outcome subtype uses mean diff (1–10 scale); screentime subtype uses a
+    ratio (minutes scale reads more naturally as 'X× higher')."""
+    other = variable_a if variable_a != "is_weekend" else variable_b
+    is_outcome = other in OUTCOME_LABELS
+    other_meta = OUTCOME_LABELS[other] if is_outcome else SCREENTIME_LABELS[other]
+
+    title_template = (
+        template.title_positive if direction == "positive" else template.title_negative
+    )
+    title = title_template.format(other_lower=other_meta["noun"])
+
+    m_wknd, m_wkdy = _binary_continuous_means(df, "is_weekend", other)
+    if not _finite(m_wknd, m_wkdy):
+        body = (
+            f"Your {other_meta['noun']} runs higher on weekends than weekdays."
+            if direction == "positive"
+            else f"Your {other_meta['noun']} runs higher on weekdays than weekends."
+        )
+        return title, body
+
+    if is_outcome:
+        body_template = (
+            template.body_positive if direction == "positive" else template.body_negative
+        )
+        body = body_template.format(
+            other_title=other_meta["title"], m_wknd=m_wknd, m_wkdy=m_wkdy,
+        )
+        return title, body
+
+    high, low = (m_wknd, m_wkdy) if direction == "positive" else (m_wkdy, m_wknd)
+    high_part = "weekends" if direction == "positive" else "weekdays"
+    low_part = "weekdays" if direction == "positive" else "weekends"
+    if low <= 0 or not math.isfinite(high / low):
+        body = f"{other_meta['title']} runs higher on {high_part} than {low_part}."
+    else:
+        body = (
+            f"{other_meta['title']} runs ~{high / low:.1f}× higher on "
+            f"{high_part} than {low_part}."
+        )
+    return title, body
+
+
+# --- Fallback bodies (used when the metric can't be computed) -------------
+
+def _fallback_mood_energy(template: InsightTemplate, direction: str) -> tuple[str, str]:
+    title = template.title_positive if direction == "positive" else template.title_negative
+    body = (
+        "Mood and energy track each other day-to-day."
+        if direction == "positive"
+        else "Mood and energy tend to move in opposite directions."
+    )
+    return title, body
+
+
+def _fallback_activity_outcome(
+    template: InsightTemplate, direction: str, al: dict, ol: dict
+) -> tuple[str, str]:
+    t = template.title_positive if direction == "positive" else template.title_negative
+    title = t.format(activity_title=al["title"], outcome_lower=ol["noun"])
+    verb = "higher" if direction == "positive" else "lower"
+    body = f"Your {ol['noun']} tends to be {verb} on days you {al['verb_past']}."
+    return title, body
+
+
+def _fallback_screentime_outcome(
+    template: InsightTemplate, direction: str, sl: dict, ol: dict
+) -> tuple[str, str]:
+    t = template.title_positive if direction == "positive" else template.title_negative
+    title = t.format(screen_title=sl["title"], outcome_lower=ol["noun"])
+    verb = "higher" if direction == "positive" else "lower"
+    body = f"More {sl['noun']} tends to come with {verb} {ol['noun']}."
+    return title, body
+
+
+def _fallback_habits_pair(
+    template: InsightTemplate, direction: str, al: dict, bl: dict
+) -> tuple[str, str]:
+    t = template.title_positive if direction == "positive" else template.title_negative
+    title = t.format(activity_a_title=al["title"], activity_b_noun=bl["noun"])
+    body = (
+        f"You usually {bl['verb_past']} on days you {al['verb_past']}."
+        if direction == "positive"
+        else f"You rarely {bl['verb_past']} on days you {al['verb_past']}."
+    )
+    return title, body
+
+
+def _fallback_screentime_link(
+    template: InsightTemplate, direction: str, al: dict, bl: dict
+) -> tuple[str, str]:
+    t = template.title_positive if direction == "positive" else template.title_negative
+    title = t.format(screen_a_title=al["title"], screen_b_noun=bl["noun"])
+    body = (
+        f"More {al['noun']} tends to come with more {bl['noun']}."
+        if direction == "positive"
+        else f"More {al['noun']} tends to come with less {bl['noun']}."
+    )
+    return title, body
+
+
+def _fallback_activity_screentime(
+    template: InsightTemplate, direction: str, al: dict, sl: dict
+) -> tuple[str, str]:
+    t = template.title_positive if direction == "positive" else template.title_negative
+    title = t.format(activity_title=al["title"], screen_noun=sl["noun"])
+    verb = "higher" if direction == "positive" else "lower"
+    body = f"Your {sl['noun']} tends to be {verb} on days you {al['verb_past']}."
+    return title, body
 
 
 # --- Pipeline entrypoint ---------------------------------------------------
@@ -222,8 +435,7 @@ def generate_insights_for_user(user_id: UUID, db: Session) -> PipelineResult:
             row.variable_a,
             row.variable_b,
             row.direction,
-            int(row.n),
-            float(row.p_value),
+            df,
         )
 
         existing = (

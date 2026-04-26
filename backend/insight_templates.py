@@ -1,15 +1,15 @@
 """Natural-language templates for turning correlation results into insights.
 
-A small, hand-tuned set of templates that map a row from
-`correlation.analyze_correlations` to a short, discovery-feeling message with
-a title and a body. Direction (positive vs negative) is handled per-template
-so the language fits the finding instead of being hedged.
+Each template maps a row from `correlation.analyze_correlations` to a short,
+discovery-feeling card with a title and a one-sentence body. Direction
+(positive vs negative) is handled per-template so the language fits the
+finding instead of being hedged.
 
-Not a pipeline — no template-selection logic and no rendering helpers beyond
-`confidence_from_p`. A future generator module will:
-  1. Pick the right template for a given pair (based on variable types).
-  2. Resolve placeholders using the label maps below (or a tuned version).
-  3. Format with `.format(**values)` and emit the final strings.
+Bodies are deliberately terse: one sentence, one concrete number — a group
+mean, ratio, or co-occurrence rate computed from the daily DataFrame. The
+card UI shows confidence as a badge, so it is intentionally absent from body
+text. The numbers themselves are computed in `insights_pipeline._render`
+before the template strings are formatted.
 """
 
 from dataclasses import dataclass
@@ -20,8 +20,8 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Confidence:
     stars: str        # glanceable visual: "★★", "★★★", "★★★★"
-    label: str        # short adjective for inline use: "moderate", "strong", "very strong"
-    long_label: str   # full phrase that drops into a body sentence
+    label: str        # short adjective: "moderate", "strong", "very strong"
+    long_label: str   # full phrase suitable for a sentence
 
 
 def confidence_from_p(p: float) -> Confidence:
@@ -35,8 +35,6 @@ def confidence_from_p(p: float) -> Confidence:
 
 
 # --- Display label maps ---------------------------------------------------
-# Starting point. Tune to match the app's voice; the generator should look
-# variable names up here when filling template placeholders.
 
 ACTIVITY_LABELS: dict[str, dict[str, str]] = {
     "did_exercise":   {"noun": "exercise",      "verb_past": "exercised",    "title": "Exercise"},
@@ -56,7 +54,10 @@ SCREENTIME_LABELS: dict[str, dict[str, str]] = {
     "total_screen_time":         {"noun": "total screen time",     "title": "Total screen time"},
 }
 
-OUTCOME_LABELS: dict[str, str] = {"mood": "mood", "energy": "energy"}
+OUTCOME_LABELS: dict[str, dict[str, str]] = {
+    "mood":   {"noun": "mood",   "title": "Mood"},
+    "energy": {"noun": "energy", "title": "Energy"},
+}
 
 
 # --- Templates ------------------------------------------------------------
@@ -79,202 +80,177 @@ INSIGHT_TEMPLATES: list[InsightTemplate] = [
     InsightTemplate(
         key="activity_affects_outcome",
         pattern="One activity flag (did_*) paired with one outcome (mood or energy).",
-        title_positive="{activity_title} lifts your {outcome}",
+        title_positive="{activity_title} lifts your {outcome_lower}",
         body_positive=(
-            "On the {n} days you {activity_verb_past}, your {outcome} ran "
-            "noticeably higher than on the days you didn't. {confidence_long} "
-            "({confidence_stars})."
+            "{outcome_title} averages {m_yes:.1f} on days you "
+            "{activity_verb_past} vs {m_no:.1f} on the rest."
         ),
-        title_negative="{activity_title} costs you {outcome}",
+        title_negative="{activity_title} drags down your {outcome_lower}",
         body_negative=(
-            "Days you {activity_verb_past} tended to come with lower {outcome}. "
-            "The dip held up across {n} days — {confidence_long} "
-            "({confidence_stars})."
+            "{outcome_title} averages {m_yes:.1f} on days you "
+            "{activity_verb_past} vs {m_no:.1f} on the rest."
         ),
         example_positive=(
             "Title: Exercise lifts your mood\n"
-            "Body:  On the 42 days you exercised, your mood ran noticeably "
-            "higher than on the days you didn't. Very strong evidence (★★★★)."
+            "Body:  Mood averages 7.4 on days you exercised vs 5.8 on the rest."
         ),
         example_negative=(
-            "Title: Gaming costs you energy\n"
-            "Body:  Days you gamed tended to come with lower energy. The dip "
-            "held up across 38 days — Moderate evidence (★★)."
+            "Title: Gaming drags down your energy\n"
+            "Body:  Energy averages 5.4 on days you gamed vs 6.8 on the rest."
         ),
     ),
 
-    # 2. Screen-time category × mood/energy. "More of X = more/less of Y"
-    #    framing without exposing raw r.
+    # 2. Screen-time category × mood/energy. Median-split on screen time, then
+    #    contrast outcome means.
     InsightTemplate(
         key="screentime_affects_outcome",
         pattern="One screen-time category (continuous minutes) paired with mood or energy.",
-        title_positive="{screen_title} pairs with higher {outcome}",
+        title_positive="{screen_title} pairs with higher {outcome_lower}",
         body_positive=(
-            "More {screen_noun} tended to come with higher {outcome} — a "
-            "consistent pattern across {n} days. {confidence_long} "
-            "({confidence_stars})."
+            "{outcome_title} averages {m_high:.1f} on days with more "
+            "{screen_noun}, {m_low:.1f} on days with less."
         ),
-        title_negative="{screen_title} is weighing on your {outcome}",
+        title_negative="{screen_title} weighs on your {outcome_lower}",
         body_negative=(
-            "More {screen_noun} tended to drag your {outcome} down — a clear "
-            "pattern across {n} days. {confidence_long} ({confidence_stars})."
+            "{outcome_title} averages {m_high:.1f} on days with more "
+            "{screen_noun}, {m_low:.1f} on days with less."
         ),
         example_positive=(
             "Title: Productivity-app time pairs with higher energy\n"
-            "Body:  More productivity-app time tended to come with higher "
-            "energy — a consistent pattern across 55 days. Strong evidence (★★★)."
+            "Body:  Energy averages 6.4 on days with more productivity-app "
+            "time, 5.1 on days with less."
         ),
         example_negative=(
-            "Title: Entertainment time is weighing on your mood\n"
-            "Body:  More entertainment time tended to drag your mood down — a "
-            "clear pattern across 62 days. Strong evidence (★★★)."
+            "Title: Entertainment time weighs on your mood\n"
+            "Body:  Mood averages 5.4 on days with more entertainment time, "
+            "6.7 on days with less."
         ),
     ),
 
-    # 3. The only outcome × outcome pair. Specific phrasing because "your mood
-    #    and energy move together" reads warmer than the generic version.
+    # 3. Mood × energy. Specific phrasing because "your mood and energy move
+    #    together" reads warmer than the generic version.
     InsightTemplate(
         key="mood_energy_couple",
         pattern="Specifically mood × energy.",
         title_positive="Your mood and energy move together",
         body_positive=(
-            "When one is up, the other usually is too — they rose and fell in "
-            "sync across {n} days. {confidence_long} ({confidence_stars})."
+            "On {pct:.0f}% of days, both land on the same side of average."
         ),
-        title_negative="Your mood and energy pull opposite",
+        title_negative="Your mood and energy pull apart",
         body_negative=(
-            "When one rises, the other tends to fall — an unusual but "
-            "consistent pattern across {n} days. {confidence_long} "
-            "({confidence_stars})."
+            "On {pct:.0f}% of days, they land on opposite sides of average."
         ),
         example_positive=(
             "Title: Your mood and energy move together\n"
-            "Body:  When one is up, the other usually is too — they rose and "
-            "fell in sync across 70 days. Very strong evidence (★★★★)."
+            "Body:  On 81% of days, both land on the same side of average."
         ),
         example_negative=(
-            "Title: Your mood and energy pull opposite\n"
-            "Body:  When one rises, the other tends to fall — an unusual but "
-            "consistent pattern across 28 days. Moderate evidence (★★)."
+            "Title: Your mood and energy pull apart\n"
+            "Body:  On 68% of days, they land on opposite sides of average."
         ),
     ),
 
-    # 4. Two activity flags. Co-occurrence (positive r) or mutual exclusion
-    #    (negative r) of behaviors.
+    # 4. Two activity flags. Co-occurrence (positive) or mutual exclusion
+    #    (negative).
     InsightTemplate(
         key="habits_pair",
         pattern="Two activity flags (did_* × did_*).",
-        title_positive="{activity_a_title} and {activity_b_noun} come as a pair",
+        title_positive="{activity_a_title} and {activity_b_noun} go hand in hand",
         body_positive=(
-            "Most days you {activity_a_verb_past}, you also {activity_b_verb_past} — "
-            "a tight pairing across {n} days. {confidence_long} "
-            "({confidence_stars})."
+            "On {pct:.0f}% of days you {activity_a_verb_past}, you also "
+            "{activity_b_verb_past}."
         ),
-        title_negative="{activity_a_title} and {activity_b_noun} rarely overlap",
+        title_negative="{activity_a_title} crowds out {activity_b_noun}",
         body_negative=(
-            "On days you {activity_a_verb_past}, you usually didn't "
-            "{activity_b_verb_past} — a clear split across {n} days. "
-            "{confidence_long} ({confidence_stars})."
+            "Just {pct:.0f}% of days you {activity_a_verb_past} also "
+            "include {activity_b_noun}."
         ),
         example_positive=(
-            "Title: Exercise and outdoor time come as a pair\n"
-            "Body:  Most days you exercised, you also went outdoors — a tight "
-            "pairing across 47 days. Very strong evidence (★★★★)."
+            "Title: Exercise and outdoor time go hand in hand\n"
+            "Body:  On 78% of days you exercised, you also went outdoors."
         ),
         example_negative=(
-            "Title: Reading and gaming rarely overlap\n"
-            "Body:  On days you read, you usually didn't game — a clear split "
-            "across 50 days. Strong evidence (★★★)."
+            "Title: Reading crowds out gaming\n"
+            "Body:  Just 12% of days you read also include gaming."
         ),
     ),
 
-    # 5. is_weekend × {mood, energy, screen-time}. Reframes the correlation as
-    #    a weekday/weekend contrast. (is_weekend × activity is not handled —
-    #    the generator should fall through to a generic template for that.)
+    # 5. is_weekend × {mood, energy, screen-time}. Body shape splits by
+    #    subtype: outcomes use a mean comparison (1–10 scale), screen-time
+    #    uses a ratio (minutes scale reads better that way). The screen-time
+    #    body string is built inside `_render` rather than stored here.
     InsightTemplate(
         key="weekend_shift",
         pattern="is_weekend paired with mood, energy, or any screen-time category.",
         title_positive="Weekends lift your {other_lower}",
         body_positive=(
-            "Your {other_noun} runs higher on Saturdays and Sundays than the "
-            "rest of the week — the pattern held over {n} days. "
-            "{confidence_long} ({confidence_stars})."
+            "{other_title} averages {m_wknd:.1f} on weekends vs "
+            "{m_wkdy:.1f} on weekdays."
         ),
-        title_negative="Weekdays carry your {other_lower}",
+        title_negative="Weekdays drive your {other_lower}",
         body_negative=(
-            "Your {other_noun} runs higher Monday through Friday than on "
-            "weekends — the pattern held over {n} days. {confidence_long} "
-            "({confidence_stars})."
+            "{other_title} averages {m_wkdy:.1f} on weekdays vs "
+            "{m_wknd:.1f} on weekends."
         ),
         example_positive=(
             "Title: Weekends lift your mood\n"
-            "Body:  Your mood runs higher on Saturdays and Sundays than the "
-            "rest of the week — the pattern held over 60 days. Very strong "
-            "evidence (★★★★)."
+            "Body:  Mood averages 7.2 on weekends vs 5.8 on weekdays.\n"
+            "(Screen-time variant rendered inline: \"Entertainment time runs "
+            "~2.1× higher on weekends than weekdays.\")"
         ),
         example_negative=(
-            "Title: Weekdays carry your productivity-app time\n"
-            "Body:  Your productivity-app time runs higher Monday through "
-            "Friday than on weekends — the pattern held over 55 days. Strong "
-            "evidence (★★★)."
+            "Title: Weekdays drive your productivity-app time\n"
+            "Body:  Productivity-app time runs ~2.4× higher on weekdays "
+            "than weekends."
         ),
     ),
 
-    # 6. Two screen-time categories. Spots usage clusters (rise together) or
-    #    trade-offs (one up, the other down).
+    # 6. Two screen-time categories. Same-side-of-median agreement reads
+    #    cleaner than raw r without lying about scale.
     InsightTemplate(
         key="screentime_categories_link",
         pattern="Two screen-time categories (e.g., social_screen_time × entertainment_screen_time).",
         title_positive="{screen_a_title} and {screen_b_noun} rise together",
         body_positive=(
-            "When one climbs, the other usually does too — the two moved "
-            "together across {n} days. {confidence_long} ({confidence_stars})."
+            "Both run high (or both run low) on {pct:.0f}% of days."
         ),
         title_negative="{screen_a_title} trades off with {screen_b_noun}",
         body_negative=(
-            "Days with more {screen_a_noun} came with less {screen_b_noun} "
-            "and vice versa — a clear trade-off across {n} days. "
-            "{confidence_long} ({confidence_stars})."
+            "One runs high while the other runs low on {pct:.0f}% of days."
         ),
         example_positive=(
             "Title: Social-app time and entertainment time rise together\n"
-            "Body:  When one climbs, the other usually does too — the two "
-            "moved together across 50 days. Strong evidence (★★★)."
+            "Body:  Both run high (or both run low) on 74% of days."
         ),
         example_negative=(
             "Title: Productivity-app time trades off with entertainment time\n"
-            "Body:  Days with more productivity-app time came with less "
-            "entertainment time and vice versa — a clear trade-off across 44 "
-            "days. Strong evidence (★★★)."
+            "Body:  One runs high while the other runs low on 71% of days."
         ),
     ),
 
-    # 7. Activity flag × screen-time category. Cross-domain link between a
-    #    behavior and screen-use.
+    # 7. Activity flag × screen-time category. Means in minutes.
     InsightTemplate(
         key="activity_shifts_screentime",
         pattern="One activity flag paired with one screen-time category.",
-        title_positive="{activity_title} days run heavier on {screen_noun}",
+        title_positive="{activity_title} days run heavy on {screen_noun}",
         body_positive=(
-            "On the {n} days you {activity_verb_past}, your {screen_noun} "
-            "tended to be noticeably higher than usual. {confidence_long} "
-            "({confidence_stars})."
+            "{screen_title} averages {m_yes:.0f} min on days you "
+            "{activity_verb_past} vs {m_no:.0f} min on the rest."
         ),
         title_negative="{activity_title} days come with less {screen_noun}",
         body_negative=(
-            "On the {n} days you {activity_verb_past}, your {screen_noun} "
-            "tended to be noticeably lower than usual. {confidence_long} "
-            "({confidence_stars})."
+            "{screen_title} averages {m_yes:.0f} min on days you "
+            "{activity_verb_past} vs {m_no:.0f} min on the rest."
         ),
         example_positive=(
-            "Title: Gaming days run heavier on entertainment time\n"
-            "Body:  On the 32 days you gamed, your entertainment time tended "
-            "to be noticeably higher than usual. Strong evidence (★★★)."
+            "Title: Gaming days run heavy on entertainment time\n"
+            "Body:  Entertainment time averages 162 min on days you gamed "
+            "vs 78 min on the rest."
         ),
         example_negative=(
             "Title: Exercise days come with less total screen time\n"
-            "Body:  On the 40 days you exercised, your total screen time "
-            "tended to be noticeably lower than usual. Strong evidence (★★★)."
+            "Body:  Total screen time averages 184 min on days you exercised "
+            "vs 312 min on the rest."
         ),
     ),
 ]
