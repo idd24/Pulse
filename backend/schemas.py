@@ -112,3 +112,34 @@ class TrendsResponse(BaseModel):
     mood: list[Optional[int]]
     energy: list[Optional[int]]
     screen_time_minutes: list[Optional[int]]
+
+
+# --- Insights --------------------------------------------------------------
+
+
+class InsightResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    template_key: str
+    variable_a: str
+    variable_b: str
+    direction: str
+    title: str
+    body: str
+    r: float
+    p_value: float
+    n: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class GenerateInsightsResponse(BaseModel):
+    checkin_count: int
+    # Populated when the user is gated out (e.g., too few check-ins). Otherwise null.
+    skipped_reason: Optional[str]
+    pairs_significant: int
+    pairs_uncovered: int
+    new_count: int
+    updated_count: int
+    insights: list[InsightResponse]

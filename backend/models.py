@@ -6,6 +6,7 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     SmallInteger,
@@ -43,6 +44,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     daily_checkins: Mapped[list["DailyCheckin"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    insights: Mapped[list["Insight"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -143,6 +147,50 @@ class DailyCheckinActivity(Base):
     activity: Mapped[str] = mapped_column(String(64), primary_key=True)
 
     checkin: Mapped["DailyCheckin"] = relationship(back_populates="activities")
+
+
+class Insight(Base):
+    __tablename__ = "insights"
+    # One row per (user, template, variable pair) — pipeline upserts on this.
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "template_key",
+            "variable_a",
+            "variable_b",
+            name="uq_insight_user_template_pair",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    template_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    variable_a: Mapped[str] = mapped_column(String(64), nullable=False)
+    variable_b: Mapped[str] = mapped_column(String(64), nullable=False)
+    direction: Mapped[str] = mapped_column(String(16), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    r: Mapped[float] = mapped_column(Float, nullable=False)
+    p_value: Mapped[float] = mapped_column(Float, nullable=False)
+    n: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(back_populates="insights")
 
 
 class ScreentimeBreakdown(Base):
