@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { InsightCard as InsightCardComponent } from '@/components/InsightCard';
 import { TrendsCard } from '@/components/TrendsCard';
 import { getMe, type AuthUser } from '@/lib/auth';
 import { getTodayCheckin, type CheckinResponse } from '@/lib/checkins';
@@ -18,11 +19,13 @@ import {
   getDashboardSummary,
   type DashboardSummaryResponse,
 } from '@/lib/dashboard';
+import { getTopInsights, type InsightResponse } from '@/lib/insights';
 
 type LoadedData = {
   me: AuthUser;
   summary: DashboardSummaryResponse;
   today: CheckinResponse | null;
+  topInsight: InsightResponse | null;
 };
 
 type DeltaDirection = 'up' | 'down' | 'flat' | 'none';
@@ -80,8 +83,15 @@ export default function HomeScreen() {
 
   function load() {
     setError(null);
-    Promise.all([getMe(), getDashboardSummary(), getTodayCheckin()])
-      .then(([me, summary, today]) => setData({ me, summary, today }))
+    Promise.all([
+      getMe(),
+      getDashboardSummary(),
+      getTodayCheckin(),
+      getTopInsights(1),
+    ])
+      .then(([me, summary, today, topInsights]) =>
+        setData({ me, summary, today, topInsight: topInsights[0] ?? null }),
+      )
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'))
       .finally(() => {
         setLoading(false);
@@ -142,12 +152,12 @@ export default function HomeScreen() {
         <GreetingBlock name={nameFromEmail(me.email)} />
         <CheckinStatusPill checkedIn={today !== null} />
 
-        <TrendsCard refreshKey={refreshKey} />
-
         <Text style={styles.sectionLabel}>This week</Text>
         {isEmpty ? <EmptyCard /> : <MetricsRow summary={summary} />}
 
-        <InsightCard />
+        <TrendsCard refreshKey={refreshKey} />
+
+        <TopInsightSection insight={data.topInsight} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -257,11 +267,28 @@ function EmptyCard() {
   );
 }
 
-function InsightCard() {
+function TopInsightSection({ insight }: { insight: InsightResponse | null }) {
+  if (!insight) {
+    return (
+      <View style={styles.insightCard}>
+        <Text style={styles.insightTitle}>Top insight</Text>
+        <Text style={styles.insightBody}>
+          Patterns appear once you have at least 14 days of check-ins. Keep
+          logging — your trends will surface here.
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.insightCard}>
-      <Text style={styles.insightTitle}>Top Insight</Text>
-      <Text style={styles.insightBody}>Insights will appear here soon.</Text>
+    <View style={styles.insightSection}>
+      <InsightCardComponent insight={insight} />
+      <Pressable
+        onPress={() => router.push('/insights')}
+        style={styles.seeAllRow}
+      >
+        <Text style={styles.seeAllText}>See all insights →</Text>
+      </Pressable>
     </View>
   );
 }
@@ -375,6 +402,24 @@ const styles = StyleSheet.create({
   insightBody: {
     color: '#9ca3af',
     fontSize: 14,
+    lineHeight: 20,
+  },
+  insightSection: {
+    backgroundColor: '#1f2328',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  seeAllRow: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#2d333b',
+    alignItems: 'center',
+  },
+  seeAllText: {
+    color: '#9ca3af',
+    fontSize: 14,
+    fontWeight: '500',
   },
   error: {
     color: '#f87171',

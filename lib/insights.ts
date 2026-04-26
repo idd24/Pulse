@@ -35,3 +35,7 @@ export function confidenceFromP(p: number): Confidence {
 export function getInsights() {
   return apiFetch<InsightResponse[]>('/api/insights');
 }
+
+export function getTopInsights(limit: number = 1) {
+  return apiFetch<InsightResponse[]>(`/api/insights/top?limit=${limit}`);
+}

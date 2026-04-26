@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -23,6 +24,26 @@ def list_insights(
         db.query(Insight)
         .filter(Insight.user_id == user.id)
         .order_by(Insight.created_at.desc())
+        .all()
+    )
+    return [InsightResponse.model_validate(r) for r in rows]
+
+
+@router.get(
+    "/top",
+    response_model=list[InsightResponse],
+    summary="Return the current user's strongest insights, ranked by |r|",
+)
+def list_top_insights(
+    limit: int = Query(3, ge=1, le=10),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[InsightResponse]:
+    rows = (
+        db.query(Insight)
+        .filter(Insight.user_id == user.id)
+        .order_by(func.abs(Insight.r).desc(), Insight.p_value.asc())
+        .limit(limit)
         .all()
     )
     return [InsightResponse.model_validate(r) for r in rows]
