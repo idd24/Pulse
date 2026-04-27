@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,8 +9,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ApiError } from '@/lib/api';
+import { ApiError, deleteToken } from '@/lib/api';
 import { getMe, logout, type AuthUser } from '@/lib/auth';
+import { clearOnboarded } from '@/lib/onboarding';
 
 export default function SettingScreen() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -49,6 +51,18 @@ export default function SettingScreen() {
       <Pressable style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutText}>Log out</Text>
       </Pressable>
+
+      {__DEV__ && (
+        <Pressable
+          style={styles.devButton}
+          onPress={async () => {
+            await Promise.all([clearOnboarded(), deleteToken()]);
+            router.replace('/intro');
+          }}
+        >
+          <Text style={styles.devText}>Reset onboarding (dev)</Text>
+        </Pressable>
+      )}
     </SafeAreaView>
   );
 }
@@ -102,5 +116,13 @@ const styles = StyleSheet.create({
   error: {
     color: '#f87171',
     fontSize: 14,
+  },
+  devButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  devText: {
+    color: '#9ca3af',
+    fontSize: 13,
   },
 });
