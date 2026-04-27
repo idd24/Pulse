@@ -125,6 +125,8 @@ class InsightResponse(BaseModel):
     variable_a: str
     variable_b: str
     direction: str
+    topic: str
+    category: str
     title: str
     body: str
     r: float

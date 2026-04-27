@@ -175,6 +175,10 @@ class Insight(Base):
     variable_a: Mapped[str] = mapped_column(String(64), nullable=False)
     variable_b: Mapped[str] = mapped_column(String(64), nullable=False)
     direction: Mapped[str] = mapped_column(String(16), nullable=False)
+    # topic dedups near-duplicate insights at the API surface; category is the
+    # short user-facing pill on the card.
+    topic: Mapped[str] = mapped_column(String(64), nullable=False)
+    category: Mapped[str] = mapped_column(String(32), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     r: Mapped[float] = mapped_column(Float, nullable=False)

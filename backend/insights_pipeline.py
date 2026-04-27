@@ -26,6 +26,7 @@ from insight_templates import (
     OUTCOME_LABELS,
     SCREENTIME_LABELS,
     InsightTemplate,
+    categorize_insight,
 )
 from models import DailyCheckin, Insight
 
@@ -160,6 +161,25 @@ def _render(
             return _fallback_mood_energy(template, direction)
         if direction == "negative":
             pct = 100.0 - pct
+        # Avoid "0% of days" / "100% of days" — read as flat sentences instead.
+        title = (
+            template.title_positive if direction == "positive"
+            else template.title_negative
+        )
+        if pct >= 99.5:
+            body = (
+                "Mood and energy moved in lockstep on every logged day."
+                if direction == "positive"
+                else "Mood and energy landed on opposite sides of average every day."
+            )
+            return title, body
+        if pct < 1:
+            body = (
+                "Mood and energy rarely lined up on the same side of average."
+                if direction == "positive"
+                else "Mood and energy almost always landed on the same side of average."
+            )
+            return title, body
         return _format_pair(template, direction, {"pct": pct})
 
     if key == "activity_affects_outcome":
@@ -200,6 +220,21 @@ def _render(
         pct = _binary_binary_cooccurrence(df, variable_a, variable_b)
         if not _finite(pct):
             return _fallback_habits_pair(template, direction, al, bl)
+        # 0% / 100% read awkwardly substituted into "Just 0% of days...".
+        # Swap to a plain-English sentence at the edges.
+        title = (
+            template.title_positive if direction == "positive"
+            else template.title_negative
+        ).format(activity_a_title=al["title"], activity_b_noun=bl["noun"])
+        if direction == "negative" and pct < 1:
+            return title, (
+                f"You haven't {bl['verb_past']} on any of the days you "
+                f"{al['verb_past']} so far."
+            )
+        if direction == "positive" and pct >= 99.5:
+            return title, (
+                f"Every day you {al['verb_past']}, you also {bl['verb_past']}."
+            )
         return _format_pair(template, direction, {
             "activity_a_title": al["title"],
             "activity_a_verb_past": al["verb_past"],
@@ -219,6 +254,28 @@ def _render(
             return _fallback_screentime_link(template, direction, al, bl)
         if direction == "negative":
             pct = 100.0 - pct
+        title = (
+            template.title_positive if direction == "positive"
+            else template.title_negative
+        ).format(screen_a_title=al["title"], screen_b_noun=bl["noun"])
+        if pct >= 99.5:
+            body = (
+                f"{al['title']} and {bl['noun']} have lined up on every "
+                "logged day."
+                if direction == "positive"
+                else f"{al['title']} and {bl['noun']} have traded off on "
+                "every logged day."
+            )
+            return title, body
+        if pct < 1:
+            body = (
+                f"{al['title']} and {bl['noun']} rarely line up on the same "
+                "side of average."
+                if direction == "positive"
+                else f"{al['title']} and {bl['noun']} almost always move "
+                "together rather than trading off."
+            )
+            return title, body
         return _format_pair(template, direction, {
             "screen_a_title": al["title"],
             "screen_b_noun": bl["noun"],
@@ -437,6 +494,9 @@ def generate_insights_for_user(user_id: UUID, db: Session) -> PipelineResult:
             row.direction,
             df,
         )
+        topic, category = categorize_insight(
+            template_key, row.variable_a, row.variable_b
+        )
 
         existing = (
             db.query(Insight)
@@ -455,6 +515,8 @@ def generate_insights_for_user(user_id: UUID, db: Session) -> PipelineResult:
                 variable_a=row.variable_a,
                 variable_b=row.variable_b,
                 direction=row.direction,
+                topic=topic,
+                category=category,
                 title=title,
                 body=body,
                 r=float(row.r),
@@ -466,6 +528,8 @@ def generate_insights_for_user(user_id: UUID, db: Session) -> PipelineResult:
             new_count += 1
         else:
             existing.direction = row.direction
+            existing.topic = topic
+            existing.category = category
             existing.title = title
             existing.body = body
             existing.r = float(row.r)

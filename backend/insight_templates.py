@@ -60,6 +60,61 @@ OUTCOME_LABELS: dict[str, dict[str, str]] = {
 }
 
 
+# --- Categorization (dedup topic + user-facing pill label) ----------------
+# `topic` is a machine ID used to dedup near-duplicates at the API surface:
+# two rows with the same topic describe the same finding through different
+# lenses (e.g. weekend_shift × productivity_screen_time vs.
+# activity_shifts_screentime(did_work, productivity_screen_time)), and the
+# curator keeps only the strongest. `category` is the short label shown on
+# the card so visually similar wording reads as different topics.
+
+CATEGORY_MOOD = "Mood"
+CATEGORY_ENERGY = "Energy"
+CATEGORY_SCREEN_TIME = "Screen time"
+CATEGORY_HABITS = "Habits"
+CATEGORY_MOOD_ENERGY = "Mood × Energy"
+
+
+def _outcome_category(var: str) -> str:
+    return CATEGORY_MOOD if var == "mood" else CATEGORY_ENERGY
+
+
+def categorize_insight(
+    template_key: str, variable_a: str, variable_b: str
+) -> tuple[str, str]:
+    """Return (topic, category) for a generated insight."""
+    if template_key == "mood_energy_couple":
+        return "mood_energy", CATEGORY_MOOD_ENERGY
+
+    if template_key == "activity_affects_outcome":
+        outcome = variable_a if variable_a in OUTCOME_LABELS else variable_b
+        return outcome, _outcome_category(outcome)
+
+    if template_key == "screentime_affects_outcome":
+        outcome = variable_a if variable_a in OUTCOME_LABELS else variable_b
+        return outcome, _outcome_category(outcome)
+
+    if template_key == "weekend_shift":
+        other = variable_b if variable_a == "is_weekend" else variable_a
+        if other in OUTCOME_LABELS:
+            return other, _outcome_category(other)
+        return other, CATEGORY_SCREEN_TIME
+
+    if template_key == "habits_pair":
+        a, b = sorted((variable_a, variable_b))
+        return f"habits:{a}:{b}", CATEGORY_HABITS
+
+    if template_key == "screentime_categories_link":
+        a, b = sorted((variable_a, variable_b))
+        return f"screen_pair:{a}:{b}", CATEGORY_SCREEN_TIME
+
+    if template_key == "activity_shifts_screentime":
+        screen = variable_a if variable_a in SCREENTIME_LABELS else variable_b
+        return screen, CATEGORY_SCREEN_TIME
+
+    raise ValueError(f"Unknown template key: {template_key}")
+
+
 # --- Templates ------------------------------------------------------------
 
 @dataclass(frozen=True)

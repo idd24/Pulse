@@ -29,6 +29,11 @@ export function InsightCard({ insight }: Props) {
           </Text>
         </View>
       </View>
+      {insight.category ? (
+        <View style={styles.categoryPill}>
+          <Text style={styles.categoryText}>{insight.category}</Text>
+        </View>
+      ) : null}
       <Text style={styles.body}>{insight.body}</Text>
     </View>
   );
@@ -61,6 +66,20 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  categoryPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#2d333b',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  categoryText: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   body: {
     color: '#9ca3af',

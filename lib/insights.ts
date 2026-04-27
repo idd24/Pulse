@@ -6,6 +6,8 @@ export type InsightResponse = {
   variable_a: string;
   variable_b: string;
   direction: 'positive' | 'negative';
+  topic: string;
+  category: string;
   title: string;
   body: string;
   r: number;
