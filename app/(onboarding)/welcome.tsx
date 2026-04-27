@@ -28,10 +28,10 @@ export default function WelcomeScreen() {
       }
     >
       <View style={styles.iconRow}>
-        <View style={[styles.iconBubble, { backgroundColor: '#FFE3C9' }]}>
+        <View style={[styles.iconBubble, { backgroundColor: c.surfaceSoft }]}>
           <TrendingUp color={c.purple} size={32} strokeWidth={1.75} />
         </View>
-        <View style={[styles.iconBubble, { backgroundColor: '#F9D2DF' }]}>
+        <View style={[styles.iconBubble, { backgroundColor: c.surfaceSoftAlt }]}>
           <BarChart3 color={c.pink} size={32} strokeWidth={1.75} />
         </View>
       </View>
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryText: {
-    color: '#fff',
+    color: c.bg,
     fontSize: 16,
     fontWeight: '600',
   },

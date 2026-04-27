@@ -6,7 +6,7 @@ import { onboardingColors } from '@/components/OnboardingPage';
 export default function OnboardingLayout() {
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerShown: false,

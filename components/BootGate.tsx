@@ -14,7 +14,7 @@ import { getHasOnboarded } from '@/lib/onboarding';
 // moment is continuous from icon tap → first interactive frame.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-const SPLASH_BG = '#FFF1D3';
+const SPLASH_BG = '#1A0E22';
 const MIN_DISPLAY_MS = 1100;
 
 export function BootGate({ children }: { children: ReactNode }) {

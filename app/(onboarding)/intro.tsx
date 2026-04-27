@@ -13,7 +13,7 @@ export default function IntroScreen() {
       footer={
         <Pressable style={styles.primary} onPress={() => router.push('/welcome')}>
           <Text style={styles.primaryText}>Next</Text>
-          <ArrowRight color="#fff" size={20} />
+          <ArrowRight color={c.bg} size={20} />
         </Pressable>
       }
     >
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 28,
-    backgroundColor: '#FFE3C9',
+    backgroundColor: c.surfaceSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 28,
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   callout: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: '#FFE3C9',
+    backgroundColor: c.surfaceSoft,
     borderRadius: 16,
     padding: 16,
     alignItems: 'flex-start',
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryText: {
-    color: '#fff',
+    color: c.bg,
     fontSize: 16,
     fontWeight: '600',
   },
