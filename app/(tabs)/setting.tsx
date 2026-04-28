@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { onboardingColors as c } from '@/components/OnboardingPage';
 import { ApiError, deleteToken } from '@/lib/api';
 import { getMe, logout, type AuthUser } from '@/lib/auth';
 import { clearOnboarded } from '@/lib/onboarding';
@@ -32,7 +33,7 @@ export default function SettingScreen() {
   if (loading) {
     return (
       <SafeAreaView edges={['top']} style={styles.loading}>
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={c.textPrimary} />
       </SafeAreaView>
     );
   }
@@ -70,51 +71,51 @@ export default function SettingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
     padding: 20,
     gap: 20,
   },
   loading: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 24,
     fontWeight: '600',
   },
   card: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: 16,
     gap: 6,
   },
   label: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 12,
   },
   email: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#f87171',
+    borderColor: c.brandOrange,
   },
   logoutText: {
-    color: '#f87171',
+    color: c.brandOrange,
     fontSize: 16,
     fontWeight: '600',
   },
   error: {
-    color: '#f87171',
+    color: c.brandOrange,
     fontSize: 14,
   },
   devButton: {
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   devText: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 13,
   },
 });

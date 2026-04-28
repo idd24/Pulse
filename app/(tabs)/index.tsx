@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { InsightCard as InsightCardComponent } from '@/components/InsightCard';
+import { onboardingColors as c } from '@/components/OnboardingPage';
 import { TrendsCard } from '@/components/TrendsCard';
 import { getMe, type AuthUser } from '@/lib/auth';
 import { getTodayCheckin, type CheckinResponse } from '@/lib/checkins';
@@ -70,8 +71,8 @@ function formatDelta(
 
 // Mood/energy going up is good; screen time going up is bad. Flip per metric.
 function deltaColor(direction: DeltaDirection, goodDirection: 'up' | 'down') {
-  if (direction === 'none' || direction === 'flat') return '#9ca3af';
-  return direction === goodDirection ? '#4ade80' : '#f87171';
+  if (direction === 'none' || direction === 'flat') return c.textMuted;
+  return direction === goodDirection ? c.textPrimary : c.brandOrange;
 }
 
 export default function HomeScreen() {
@@ -106,7 +107,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <SafeAreaView edges={['top']} style={styles.loading}>
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={c.textPrimary} />
       </SafeAreaView>
     );
   }
@@ -145,7 +146,7 @@ export default function HomeScreen() {
               setRefreshKey((k) => k + 1);
               load();
             }}
-            tintColor="#fff"
+            tintColor={c.textPrimary}
           />
         }
       >
@@ -296,7 +297,7 @@ function TopInsightSection({ insight }: { insight: InsightResponse | null }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
   },
   content: {
     padding: 20,
@@ -305,33 +306,33 @@ const styles = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
     gap: 12,
   },
   greeting: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 22,
     fontWeight: '600',
   },
   statusPill: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
   statusText: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 15,
   },
   statusCheck: {
-    color: '#4ade80',
+    color: c.brandPurpleBright,
     fontWeight: '700',
   },
   sectionLabel: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -343,17 +344,17 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: 14,
     gap: 4,
   },
   metricLabel: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 13,
   },
   metricValue: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 22,
     fontWeight: '600',
   },
@@ -362,50 +363,50 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   emptyCard: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: 18,
     gap: 10,
   },
   emptyTitle: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
   emptyBody: {
-    color: '#9ca3af',
+    color: c.textSecondary,
     fontSize: 14,
   },
   emptyButton: {
-    backgroundColor: '#fff',
+    backgroundColor: c.brandPurple,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 4,
   },
   emptyButtonText: {
-    color: '#25292e',
+    color: c.textPrimary,
     fontSize: 15,
     fontWeight: '600',
   },
   insightCard: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: 14,
     gap: 6,
   },
   insightTitle: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
   insightBody: {
-    color: '#9ca3af',
+    color: c.textSecondary,
     fontSize: 14,
     lineHeight: 20,
   },
   insightSection: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     overflow: 'hidden',
   },
@@ -413,16 +414,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#2d333b',
+    borderTopColor: c.border,
     alignItems: 'center',
   },
   seeAllText: {
-    color: '#9ca3af',
+    color: c.textSecondary,
     fontSize: 14,
     fontWeight: '500',
   },
   error: {
-    color: '#f87171',
+    color: c.brandOrange,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -431,7 +432,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   retryText: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 14,
     textDecorationLine: 'underline',
   },

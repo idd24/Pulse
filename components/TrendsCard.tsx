@@ -10,16 +10,17 @@ import {
 } from 'react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 
+import { onboardingColors as c } from '@/components/OnboardingPage';
 import { ApiError } from '@/lib/api';
 import { getTrends, type TrendsRange, type TrendsResponse } from '@/lib/trends';
 
 const RANGES: TrendsRange[] = ['7d', '30d', '90d'];
 
-const COLOR_MOOD = '#fbbf24';
-const COLOR_ENERGY = '#22c55e';
-const COLOR_SCREEN = '#60a5fa';
-const COLOR_AXIS = '#374151';
-const COLOR_AXIS_TEXT = '#9ca3af';
+const COLOR_MOOD = c.brandOrange;
+const COLOR_ENERGY = c.brandPurpleBright;
+const COLOR_SCREEN = c.textPrimary;
+const COLOR_AXIS = c.border;
+const COLOR_AXIS_TEXT = c.textMuted;
 
 // Card padding (14) + outer page padding (20) on both sides.
 const CHART_HORIZONTAL_INSET = 2 * (14 + 20);
@@ -79,7 +80,7 @@ function Body({
   if (loading && !data) {
     return (
       <View style={styles.placeholder}>
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={c.textPrimary} />
       </View>
     );
   }
@@ -331,7 +332,7 @@ function rangeFooterLabel(range: TrendsRange, data: TrendsResponse): string {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: 14,
     gap: 12,
@@ -342,7 +343,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -355,19 +356,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2d333b',
+    borderColor: c.border,
   },
   togglePillSelected: {
-    backgroundColor: '#fff',
-    borderColor: '#fff',
+    backgroundColor: c.brandPurple,
+    borderColor: c.brandPurple,
   },
   toggleText: {
-    color: '#9ca3af',
+    color: c.textSecondary,
     fontSize: 12,
     fontWeight: '600',
   },
   toggleTextSelected: {
-    color: '#1f2328',
+    color: c.textPrimary,
   },
   charts: {
     gap: 14,
@@ -378,7 +379,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   subHeaderTitle: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendText: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 11,
   },
   axisLabel: {
@@ -406,7 +407,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   rangeFooter: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 11,
     textAlign: 'center',
     marginTop: 2,
@@ -417,7 +418,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    color: '#f87171',
+    color: c.brandOrange,
     fontSize: 13,
     textAlign: 'center',
   },
@@ -426,23 +427,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emptyTitle: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 15,
     fontWeight: '600',
   },
   emptyBody: {
-    color: '#9ca3af',
+    color: c.textSecondary,
     fontSize: 13,
   },
   emptyButton: {
-    backgroundColor: '#fff',
+    backgroundColor: c.brandPurple,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
     marginTop: 4,
   },
   emptyButtonText: {
-    color: '#25292e',
+    color: c.textPrimary,
     fontSize: 14,
     fontWeight: '600',
   },

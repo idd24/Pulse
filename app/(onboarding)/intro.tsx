@@ -13,12 +13,12 @@ export default function IntroScreen() {
       footer={
         <Pressable style={styles.primary} onPress={() => router.push('/welcome')}>
           <Text style={styles.primaryText}>Next</Text>
-          <ArrowRight color={c.bg} size={20} />
+          <ArrowRight color={c.textPrimary} size={20} />
         </Pressable>
       }
     >
       <View style={styles.iconWrap}>
-        <CheckCircle2 color={c.purple} size={56} strokeWidth={1.75} />
+        <CheckCircle2 color={c.textPrimary} size={56} strokeWidth={1.75} />
       </View>
 
       <Text style={styles.title}>Check in once a day</Text>
@@ -28,7 +28,7 @@ export default function IntroScreen() {
       </Text>
 
       <View style={styles.callout}>
-        <Sparkles color={c.pink} size={22} strokeWidth={2} />
+        <Sparkles color={c.textPrimary} size={22} strokeWidth={2} />
         <Text style={styles.calloutText}>
           Personal insights unlock after{' '}
           <Text style={styles.calloutEmphasis}>14 days</Text> of check-ins. Keep
@@ -45,20 +45,20 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 28,
-    backgroundColor: c.surfaceSoft,
+    backgroundColor: c.brandPurpleSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 28,
   },
   title: {
-    color: c.purple,
+    color: c.textPrimary,
     fontSize: 30,
     fontWeight: '700',
     textAlign: 'center',
     letterSpacing: -0.5,
   },
   lead: {
-    color: c.purpleSoft,
+    color: c.textSecondary,
     fontSize: 16,
     lineHeight: 23,
     textAlign: 'center',
@@ -68,14 +68,14 @@ const styles = StyleSheet.create({
   callout: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: c.surfaceSoft,
+    backgroundColor: c.brandPurpleSoft,
     borderRadius: 16,
     padding: 16,
     alignItems: 'flex-start',
   },
   calloutText: {
     flex: 1,
-    color: c.purple,
+    color: c.textPrimary,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   primary: {
-    backgroundColor: c.purple,
+    backgroundColor: c.brandPurple,
     borderRadius: 14,
     paddingVertical: 16,
     flexDirection: 'row',
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryText: {
-    color: c.bg,
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },

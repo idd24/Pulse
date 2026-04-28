@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { InsightCard } from '@/components/InsightCard';
+import { onboardingColors as c } from '@/components/OnboardingPage';
 import { ApiError } from '@/lib/api';
 import { getInsights, type InsightResponse } from '@/lib/insights';
 
@@ -40,7 +41,7 @@ export default function InsightsScreen() {
   if (loading) {
     return (
       <SafeAreaView edges={['top']} style={styles.loading}>
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={c.textPrimary} />
       </SafeAreaView>
     );
   }
@@ -73,7 +74,7 @@ export default function InsightsScreen() {
               setRefreshing(true);
               load();
             }}
-            tintColor="#fff"
+            tintColor={c.textPrimary}
           />
         }
       >
@@ -105,7 +106,7 @@ function EmptyState() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
   },
   content: {
     padding: 20,
@@ -114,36 +115,36 @@ const styles = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
     gap: 12,
   },
   title: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 24,
     fontWeight: '600',
     marginBottom: 4,
   },
   emptyCard: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: 18,
     gap: 8,
   },
   emptyTitle: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
   emptyBody: {
-    color: '#9ca3af',
+    color: c.textSecondary,
     fontSize: 14,
     lineHeight: 20,
   },
   error: {
-    color: '#f87171',
+    color: c.brandOrange,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   retryText: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 14,
     textDecorationLine: 'underline',
   },

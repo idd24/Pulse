@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { onboardingColors as c } from '@/components/OnboardingPage';
 import { confidenceFromP, type InsightResponse } from '@/lib/insights';
 
 type Props = { insight: InsightResponse };
@@ -8,9 +9,9 @@ const BADGE_STYLES: Record<
   'moderate' | 'strong' | 'very strong',
   { bg: string; fg: string }
 > = {
-  moderate:      { bg: '#2d333b',                 fg: '#9ca3af' },
-  strong:        { bg: 'rgba(251, 191, 36, 0.15)', fg: '#fbbf24' },
-  'very strong': { bg: 'rgba(74, 222, 128, 0.15)', fg: '#4ade80' },
+  moderate:      { bg: 'transparent',     fg: c.textMuted },
+  strong:        { bg: c.brandOrangeSoft, fg: c.brandOrange },
+  'very strong': { bg: c.brandPurpleSoft, fg: c.brandPurpleBright },
 };
 
 export function InsightCard({ insight }: Props) {
@@ -41,7 +42,7 @@ export function InsightCard({ insight }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: 14,
     gap: 8,
@@ -53,7 +54,7 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
     lineHeight: 22,
@@ -62,6 +63,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: c.border,
   },
   badgeText: {
     fontSize: 11,
@@ -69,20 +72,21 @@ const styles = StyleSheet.create({
   },
   categoryPill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#2d333b',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: c.border,
   },
   categoryText: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
   body: {
-    color: '#9ca3af',
+    color: c.textSecondary,
     fontSize: 14,
     lineHeight: 20,
   },

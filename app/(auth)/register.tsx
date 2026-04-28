@@ -50,8 +50,6 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.root}>
-      <View pointerEvents="none" style={styles.blob} />
-
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -59,7 +57,7 @@ export default function RegisterScreen() {
         <View style={styles.body}>
           <View style={styles.hero}>
             <View style={styles.iconBubble}>
-              <UserPlus color={c.purple} size={32} strokeWidth={1.75} />
+              <UserPlus color={c.textPrimary} size={32} strokeWidth={1.75} />
             </View>
             <Text style={styles.title}>Create your account</Text>
             <Text style={styles.subtitle}>Start logging in under a minute.</Text>
@@ -67,11 +65,11 @@ export default function RegisterScreen() {
 
           <View style={styles.form}>
             <View style={styles.field}>
-              <Mail color={c.purple} size={18} strokeWidth={2} />
+              <Mail color={c.textPrimary} size={18} strokeWidth={2} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor="rgba(243, 228, 248, 0.4)"
+                placeholderTextColor={c.textMuted}
                 autoCapitalize="none"
                 autoComplete="email"
                 keyboardType="email-address"
@@ -82,11 +80,11 @@ export default function RegisterScreen() {
 
             <View>
               <View style={styles.field}>
-                <Lock color={c.purple} size={18} strokeWidth={2} />
+                <Lock color={c.textPrimary} size={18} strokeWidth={2} />
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
-                  placeholderTextColor="rgba(243, 228, 248, 0.4)"
+                  placeholderTextColor={c.textMuted}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   value={password}
@@ -97,9 +95,9 @@ export default function RegisterScreen() {
                   hitSlop={8}
                 >
                   {showPassword ? (
-                    <EyeOff color={c.purple} size={18} strokeWidth={2} />
+                    <EyeOff color={c.textPrimary} size={18} strokeWidth={2} />
                   ) : (
-                    <Eye color={c.purple} size={18} strokeWidth={2} />
+                    <Eye color={c.textPrimary} size={18} strokeWidth={2} />
                   )}
                 </Pressable>
               </View>
@@ -108,7 +106,7 @@ export default function RegisterScreen() {
 
             {error ? (
               <View style={styles.errorCard}>
-                <AlertCircle color={c.pink} size={16} strokeWidth={2} />
+                <AlertCircle color={c.brandOrange} size={16} strokeWidth={2} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
@@ -119,7 +117,7 @@ export default function RegisterScreen() {
               disabled={disabled}
             >
               {loading ? (
-                <ActivityIndicator color={c.bg} />
+                <ActivityIndicator color={c.textPrimary} />
               ) : (
                 <Text style={styles.primaryText}>Create account</Text>
               )}
@@ -150,15 +148,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 28,
   },
-  blob: {
-    position: 'absolute',
-    top: -120,
-    right: -100,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: 'rgba(255, 176, 144, 0.22)',
-  },
   body: {
     flex: 1,
     justifyContent: 'center',
@@ -172,20 +161,20 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: c.surfaceSoft,
+    backgroundColor: c.brandPurpleSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
   },
   title: {
-    color: c.purple,
+    color: c.textPrimary,
     fontSize: 30,
     fontWeight: '700',
     letterSpacing: -0.5,
     textAlign: 'center',
   },
   subtitle: {
-    color: c.purpleSoft,
+    color: c.textSecondary,
     fontSize: 16,
     textAlign: 'center',
     marginTop: 8,
@@ -200,18 +189,18 @@ const styles = StyleSheet.create({
     backgroundColor: c.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(243, 228, 248, 0.14)',
+    borderColor: c.border,
     paddingHorizontal: 14,
     paddingVertical: Platform.OS === 'ios' ? 14 : 10,
   },
   input: {
     flex: 1,
-    color: c.purple,
+    color: c.textPrimary,
     fontSize: 16,
     padding: 0,
   },
   helper: {
-    color: c.purpleSoft,
+    color: c.textMuted,
     fontSize: 12,
     marginTop: 6,
     marginLeft: 4,
@@ -220,19 +209,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(233, 136, 189, 0.16)',
+    backgroundColor: c.brandOrangeSoft,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   errorText: {
     flex: 1,
-    color: c.purple,
+    color: c.textPrimary,
     fontSize: 14,
     lineHeight: 20,
   },
   primary: {
-    backgroundColor: c.purple,
+    backgroundColor: c.brandPurple,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
@@ -243,7 +232,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   primaryText: {
-    color: c.bg,
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -253,11 +242,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   secondaryText: {
-    color: c.purpleSoft,
+    color: c.textSecondary,
     fontSize: 14,
   },
   secondaryEmphasis: {
-    color: c.purple,
+    color: c.brandOrange,
     fontWeight: '600',
   },
 });

@@ -1,6 +1,8 @@
 import { Link, Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { onboardingColors as c } from '@/components/OnboardingPage';
+
 export default function NotFoundScreen() {
   return (
     <>
@@ -17,7 +19,7 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -25,6 +27,6 @@ const styles = StyleSheet.create({
   button: {
     fontSize: 20,
     textDecorationLine: 'underline',
-    color: '#fff',
+    color: c.textPrimary,
   },
 });

@@ -28,19 +28,19 @@ export default function WelcomeScreen() {
       }
     >
       <View style={styles.iconRow}>
-        <View style={[styles.iconBubble, { backgroundColor: c.surfaceSoft }]}>
-          <TrendingUp color={c.purple} size={32} strokeWidth={1.75} />
+        <View style={styles.iconBubble}>
+          <TrendingUp color={c.textPrimary} size={32} strokeWidth={1.75} />
         </View>
-        <View style={[styles.iconBubble, { backgroundColor: c.surfaceSoftAlt }]}>
-          <BarChart3 color={c.pink} size={32} strokeWidth={1.75} />
+        <View style={styles.iconBubble}>
+          <BarChart3 color={c.textPrimary} size={32} strokeWidth={1.75} />
         </View>
       </View>
 
       <Text style={styles.title}>See yourself clearly</Text>
       <Text style={styles.lead}>
-        Pulse turns your everyday check-ins into trends you can use — what
-        lifts your mood, what drains your energy, what your week really looks
-        like.
+        <Text style={styles.leadBrand}>Pulse</Text> turns your everyday
+        check-ins into trends you can use — what lifts your mood, what drains
+        your energy, what your week really looks like.
       </Text>
     </OnboardingPage>
   );
@@ -57,32 +57,37 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
+    backgroundColor: c.brandPurpleSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    color: c.purple,
+    color: c.textPrimary,
     fontSize: 30,
     fontWeight: '700',
     textAlign: 'center',
     letterSpacing: -0.5,
   },
   lead: {
-    color: c.purpleSoft,
+    color: c.textSecondary,
     fontSize: 16,
     lineHeight: 23,
     textAlign: 'center',
     marginTop: 12,
   },
+  leadBrand: {
+    color: c.brandOrange,
+    fontWeight: '600',
+  },
   primary: {
-    backgroundColor: c.purple,
+    backgroundColor: c.brandPurple,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryText: {
-    color: c.bg,
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -91,7 +96,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryText: {
-    color: c.purple,
+    color: c.brandOrange,
     fontSize: 14,
     fontWeight: '500',
   },

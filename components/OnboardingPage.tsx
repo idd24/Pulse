@@ -3,14 +3,19 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const onboardingColors = {
-  bg: '#1A0E22',
-  peach: '#FFB090',
-  pink: '#E988BD',
-  purple: '#F3E4F8',
-  purpleSoft: 'rgba(243, 228, 248, 0.65)',
-  surface: '#2A1838',
-  surfaceSoft: '#3A1F4D',
-  surfaceSoftAlt: '#42223F',
+  bg: '#0A0A0A',
+  surface: '#111114',
+  border: 'rgba(255, 255, 255, 0.08)',
+  textPrimary: '#FFFFFF',
+  textSecondary: 'rgba(255, 255, 255, 0.65)',
+  textMuted: 'rgba(255, 255, 255, 0.4)',
+  brandPurple: '#5A189A',
+  brandPurpleSoft: 'rgba(90, 24, 154, 0.20)',
+  brandPurpleBright: '#9D4EDD',
+  brandOrange: '#FF7900',
+  brandOrangeSoft: 'rgba(255, 121, 0, 0.12)',
+  dotActive: '#FFFFFF',
+  dotInactive: 'rgba(255, 255, 255, 0.18)',
 };
 
 type Props = {
@@ -54,10 +59,10 @@ const styles = StyleSheet.create({
     width: 22,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(243, 228, 248, 0.18)',
+    backgroundColor: onboardingColors.dotInactive,
   },
   dotActive: {
-    backgroundColor: onboardingColors.purple,
+    backgroundColor: onboardingColors.dotActive,
   },
   body: {
     flex: 1,

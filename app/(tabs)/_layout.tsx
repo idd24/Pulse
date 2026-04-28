@@ -3,6 +3,7 @@ import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
+import { onboardingColors as c } from '@/components/OnboardingPage';
 import { getToken } from '@/lib/api';
 import { getMe } from '@/lib/auth';
 
@@ -32,12 +33,12 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1f2328',
-          borderTopColor: '#2d333b',
+          backgroundColor: c.bg,
+          borderTopColor: c.border,
           borderTopWidth: StyleSheet.hairlineWidth,
         },
-        tabBarActiveTintColor: '#fff',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: c.textPrimary,
+        tabBarInactiveTintColor: c.textMuted,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '500',

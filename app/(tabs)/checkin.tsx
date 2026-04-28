@@ -10,10 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { onboardingColors as c } from '@/components/OnboardingPage';
 import {
   ACTIVITIES,
-  ENERGY_COLORS,
   ENERGY_LABELS,
+  ENERGY_LEVELS,
   MOOD_EMOJI,
   type ActivityId,
 } from '@/lib/checkinOptions';
@@ -101,7 +102,7 @@ export default function CheckinScreen() {
   if (loading) {
     return (
       <SafeAreaView edges={['top']} style={styles.loading}>
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={c.textPrimary} />
       </SafeAreaView>
     );
   }
@@ -135,19 +136,20 @@ export default function CheckinScreen() {
 
       <Section label="Energy level">
         <View style={styles.energyRow}>
-          {ENERGY_COLORS.map((color, i) => {
+          {ENERGY_LEVELS.map((i) => {
             const selected = energy === i;
             return (
               <Pressable
                 key={i}
                 onPress={() => setEnergy(i)}
-                style={[
-                  styles.energyPill,
-                  { backgroundColor: selected ? color : 'transparent', borderColor: color },
-                  selected && styles.energyPillSelected,
-                ]}
+                style={[styles.energyPill, selected && styles.energyPillSelected]}
               >
-                <Text style={[styles.energyText, selected && styles.energyTextSelected]}>
+                <Text
+                  style={[
+                    styles.energyText,
+                    selected && styles.energyTextSelected,
+                  ]}
+                >
                   {i + 1}
                 </Text>
               </Pressable>
@@ -202,7 +204,7 @@ export default function CheckinScreen() {
         disabled={disabled}
       >
         {saving ? (
-          <ActivityIndicator color="#25292e" />
+          <ActivityIndicator color={c.textPrimary} />
         ) : (
           <Text style={styles.buttonText}>
             {existing ? 'Update check-in' : 'Save check-in'}
@@ -255,9 +257,9 @@ function SliderRow({
         step={SLIDER_STEP}
         value={value}
         onValueChange={(v) => onChange(Math.round(v))}
-        minimumTrackTintColor="#fff"
-        maximumTrackTintColor="#333942"
-        thumbTintColor="#fff"
+        minimumTrackTintColor={c.brandPurple}
+        maximumTrackTintColor={c.border}
+        thumbTintColor={c.textPrimary}
       />
     </View>
   );
@@ -266,7 +268,7 @@ function SliderRow({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
   },
   content: {
     padding: 20,
@@ -275,17 +277,17 @@ const styles = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: c.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 20,
     fontWeight: '600',
   },
   subtitle: {
-    color: '#9ca3af',
+    color: c.textSecondary,
     fontSize: 14,
     marginBottom: 12,
   },
@@ -294,12 +296,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionLabel: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
   hint: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 12,
   },
   emojiRow: {
@@ -312,13 +314,13 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   emojiSelected: {
-    borderColor: '#fff',
-    backgroundColor: '#2d333b',
+    borderColor: c.brandPurple,
+    backgroundColor: c.brandPurpleSoft,
   },
   emoji: {
     fontSize: 26,
@@ -333,18 +335,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
-    borderWidth: 2,
+    backgroundColor: c.surface,
+    borderWidth: 1,
+    borderColor: c.border,
   },
   energyPillSelected: {
-    transform: [{ scale: 1.05 }],
+    backgroundColor: c.brandPurple,
+    borderColor: c.brandPurple,
   },
   energyText: {
-    color: '#fff',
+    color: c.textSecondary,
     fontSize: 16,
     fontWeight: '600',
   },
   energyTextSelected: {
-    color: '#111',
+    color: c.textPrimary,
   },
   energyLabels: {
     flexDirection: 'row',
@@ -357,27 +362,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: c.border,
   },
   chipSelected: {
-    backgroundColor: '#fff',
-    borderColor: '#fff',
+    backgroundColor: c.brandPurple,
+    borderColor: c.brandPurple,
   },
   chipText: {
-    color: '#d1d5db',
+    color: c.textSecondary,
     fontSize: 14,
   },
   chipTextSelected: {
-    color: '#25292e',
+    color: c.textPrimary,
     fontWeight: '600',
   },
   sliderRow: {
-    backgroundColor: '#1f2328',
+    backgroundColor: c.surface,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -389,16 +394,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sliderLabel: {
-    color: '#fff',
+    color: c.textPrimary,
     fontSize: 14,
     fontWeight: '500',
   },
   sliderValue: {
-    color: '#9ca3af',
+    color: c.textMuted,
     fontSize: 13,
   },
   button: {
-    backgroundColor: '#fff',
+    backgroundColor: c.brandPurple,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
@@ -408,17 +413,17 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   buttonText: {
-    color: '#25292e',
+    color: c.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
   error: {
-    color: '#f87171',
+    color: c.brandOrange,
     fontSize: 14,
     marginTop: 16,
   },
   saved: {
-    color: '#4ade80',
+    color: c.textPrimary,
     fontSize: 14,
     textAlign: 'center',
     marginTop: 10,

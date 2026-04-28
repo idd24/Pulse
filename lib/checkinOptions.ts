@@ -15,13 +15,7 @@ export type ActivityId = (typeof ACTIVITIES)[number]['id'];
 
 export const MOOD_EMOJI = ['😣', '😕', '😐', '🙂', '😄'] as const;
 
-// Red (0) → green (4). Indexed by score; UI renders i+1 as the label.
-export const ENERGY_COLORS = [
-  '#ef4444',
-  '#f59e0b',
-  '#eab308',
-  '#84cc16',
-  '#22c55e',
-] as const;
+// Indexed by score; UI renders i+1 as the label.
+export const ENERGY_LEVELS = [0, 1, 2, 3, 4] as const;
 
 export const ENERGY_LABELS = ['Drained', 'Energized'] as const;
